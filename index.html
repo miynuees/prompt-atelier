@@ -760,6 +760,22 @@ button{font-family:inherit}
 .btn-pdf:hover{box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
 .btn-pdf:active{transform:scale(.97)}
 .btn-pdf:disabled{background:var(--line);color:var(--sub);cursor:not-allowed;box-shadow:none}
+.btn-pdf-alt{
+  background:#fff !important;
+  color:var(--lilac) !important;
+  border:1.5px solid var(--lilac-2) !important;
+}
+.btn-pdf-alt:hover{background:var(--lilac-3) !important;box-shadow:none !important}
+.submit-btn-row{
+  display:flex;justify-content:center;gap:10px;
+  flex-wrap:wrap;margin-bottom:12px;
+}
+.submit-hint{
+  color:var(--sub) !important;
+  font-size:11.5px !important;
+  margin:0 !important;
+  line-height:1.6;
+}
 
 /* ───── Bottom nav ───── */
 .nav-bar{
@@ -1485,8 +1501,12 @@ button{font-family:inherit}
     <!-- 제출 패널 -->
     <div class="submit-panel">
       <h3>🎉 제출하기</h3>
-      <p>전체 여정(프롬프트·이미지·성찰 답변)을 PDF로 저장해 제출합니다.</p>
-      <button class="btn-pdf" id="btnPdf">📄 PDF로 저장하기</button>
+      <p>전체 여정(프롬프트·이미지·성찰 답변)을 저장해 제출합니다.</p>
+      <div class="submit-btn-row">
+        <button class="btn-pdf" id="btnPdf">📄 PDF로 저장</button>
+        <button class="btn-pdf btn-pdf-alt" id="btnHtml">💾 HTML 파일로 저장</button>
+      </div>
+      <p class="submit-hint">📄 PDF는 인쇄 대화상자로 열려요. 📱 모바일에서 안 되면 💾 HTML로 저장해주세요.</p>
     </div>
   </section>
 
@@ -2515,6 +2535,81 @@ function isStage5Valid(){
  *  PDF export
  * ════════════════════════════════════════════════════════════════*/
 $('btnPdf').addEventListener('click', exportPDF);
+$('btnHtml').addEventListener('click', exportHTML);
+
+/* 전체 여정을 자체 완결 HTML 파일로 다운로드 (모바일·PC 모두 안정적) */
+function exportHTML(){
+  const btn = $('btnHtml');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '💾 준비 중...';
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    const inner = buildPDFContent(); // 이미 <div class="pdf-root">...</div>
+    // pdf-root 스타일을 인라인으로 포함해 독립 실행 가능한 HTML 생성
+    const fontsLink = `<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">`;
+    const styles = `
+body{margin:0;padding:0;background:#FDFAF5;font-family:'Noto Sans KR',sans-serif;color:#3F3A4A}
+.pdf-root{
+  font-family:'Noto Sans KR',sans-serif;color:#3F3A4A;
+  padding:30px 36px;max-width:780px;margin:20px auto;
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 18px rgba(180,150,220,0.15);
+  overflow-wrap:anywhere;word-break:break-word;
+}
+.pdf-root h1{font-family:'Gowun Batang',serif;font-size:24px;margin:0 0 6px;text-align:center}
+.pdf-root .pdf-sub{text-align:center;color:#8B869A;font-size:12px;margin-bottom:20px}
+.pdf-root h2{font-family:'Gowun Batang',serif;font-size:17px;margin:22px 0 8px;border-bottom:2px solid #E4D9F7;padding-bottom:4px}
+.pdf-root h3{font-size:13px;margin:12px 0 4px;color:#5A4E6E}
+.pdf-root p{font-size:12px;line-height:1.7;margin:4px 0;white-space:pre-wrap}
+.pdf-root .pdf-img{text-align:center;margin:10px 0}
+.pdf-root .pdf-img img{width:280px;height:280px;object-fit:cover;border-radius:6px;display:block;margin:0 auto}
+.pdf-root .pdf-img .cap{font-size:10.5px;color:#8B869A;margin-top:4px}
+.pdf-root .pdf-prompt{background:#F4EEFB;padding:10px 12px;border-radius:6px;font-size:11.5px;line-height:1.7;white-space:pre-wrap}
+.pdf-root .pdf-answer{background:#FDFAF5;border-left:3px solid #B8D4B8;padding:8px 12px;margin:4px 0;font-size:12px;line-height:1.7;white-space:pre-wrap}
+.pdf-root .pdf-chat-msg{padding:7px 11px;margin:4px 0;border-radius:6px;font-size:11.5px;line-height:1.6;white-space:pre-wrap}
+.pdf-root .pdf-chat-msg.assistant{background:#F4EEFB}
+.pdf-root .pdf-chat-msg.user{background:#D9E8D9}
+@media print{
+  body{background:#fff}
+  .pdf-root{box-shadow:none;margin:0;max-width:100%;padding:20px}
+}
+`;
+    const fullHtml = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>프롬프트 아틀리에 — 나의 여정 (${today})</title>
+${fontsLink}
+<style>${styles}</style>
+</head>
+<body>
+${inner}
+</body>
+</html>`;
+    // UTF-8 BOM 포함 (윈도우에서도 한글 깨지지 않게)
+    const bom = '﻿';
+    const blob = new Blob([bom + fullHtml], { type:'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const filename = `프롬프트아틀리에_${today}.html`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    toast(`💾 ${filename} 저장되었어요`);
+  }catch(e){
+    console.error(e);
+    toast('HTML 저장에 실패했어요');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
 
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c => ({
