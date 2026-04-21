@@ -1,0 +1,2725 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>프롬프트 아틀리에 🎨</title>
+<meta name="description" content="내 감정을 AI와 함께 이미지로. 프롬프트를 다듬어가는 디지털 창작 과정 수업 도구.">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+<meta name="theme-color" content="#C9B6F0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FDFAF5;
+  --paper:#FFFFFF;
+  --lilac:#C9B6F0;
+  --lilac-2:#E4D9F7;
+  --lilac-3:#F4EEFB;
+  --peach:#F5C6B0;
+  --peach-2:#FADFD2;
+  --peach-3:#FCF0EA;
+  --sage:#B8D4B8;
+  --sage-2:#D9E8D9;
+  --ink:#3F3A4A;
+  --sub:#8B869A;
+  --line:#EDE6F0;
+  --accent-rgb:180,150,220;
+  --shadow:0 4px 14px rgba(var(--accent-rgb),.15);
+  --shadow-lg:0 8px 28px rgba(var(--accent-rgb),.2);
+  --r-sm:10px;
+  --r:14px;
+  --r-lg:22px;
+  --r-xl:28px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  font-weight:400;
+}
+.title-font{font-family:'Gowun Batang',serif;letter-spacing:-.3px}
+button{font-family:inherit}
+
+/* ───── App layout ───── */
+.app{max-width:1400px;margin:0 auto;padding:24px 28px 120px}
+
+/* ───── Header ───── */
+.header{
+  position:relative;
+  text-align:center;padding:24px 20px 18px;
+  background:linear-gradient(135deg,var(--lilac-3) 0%,var(--peach-3) 100%);
+  border-radius:var(--r-xl);margin-bottom:24px;
+  box-shadow:var(--shadow);
+}
+.btn-reset{
+  position:absolute;top:14px;right:14px;
+  background:rgba(255,255,255,.75);border:1px solid var(--line);
+  color:var(--sub);padding:6px 12px;border-radius:99px;
+  font-size:11px;cursor:pointer;font-family:inherit;
+  transition:.2s;display:inline-flex;align-items:center;gap:4px;
+}
+.btn-reset:hover{background:#fff;color:var(--ink);border-color:var(--lilac-2)}
+@media (max-width:560px){
+  .btn-reset{top:10px;right:10px;font-size:10px;padding:4px 10px}
+}
+.header h1{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:30px;margin:0 0 6px;
+  color:var(--ink);letter-spacing:-.3px;
+}
+.header .sub{color:var(--sub);font-size:14px;margin:0}
+.header .motto{
+  color:var(--lilac);font-size:12px;margin:6px 0 0;
+  font-style:italic;letter-spacing:.2px;
+  opacity:.85;
+}
+
+/* ───── Stepper ───── */
+.stepper{
+  display:flex;justify-content:center;align-items:center;gap:6px;
+  margin:22px auto 0;flex-wrap:wrap;
+}
+.step{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.7);
+  padding:7px 14px 7px 10px;border-radius:99px;
+  font-size:13px;color:var(--sub);
+  transition:all .25s;cursor:default;
+  border:1.5px solid transparent;
+}
+.step .step-num{
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;color:var(--sub);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:12px;
+}
+.step.done{color:var(--ink)}
+.step.done .step-num{background:var(--sage);color:#fff}
+.step.active{
+  background:var(--lilac);color:#fff;
+  box-shadow:0 3px 10px rgba(var(--accent-rgb),.35);
+}
+.step.active .step-num{background:#fff;color:var(--lilac)}
+.step-arrow{color:var(--line);font-size:11px}
+@media (max-width:560px){
+  .step{padding:5px 10px 5px 8px;font-size:12px}
+  .step-label{display:none}
+  .step-arrow{display:none}
+}
+
+/* ───── Stage section ───── */
+.stage{display:none}
+.stage.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{
+  background:var(--paper);border-radius:var(--r-lg);
+  padding:28px 26px;box-shadow:var(--shadow);
+  margin-bottom:18px;
+}
+.card-title{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:22px;margin:0 0 6px;color:var(--ink);letter-spacing:-.2px;
+}
+.card-sub{
+  color:var(--sub);font-size:14px;line-height:1.55;margin:0 0 22px;
+}
+
+/* ───── Stage 1: open textarea ───── */
+.free-area{
+  width:100%;min-height:160px;
+  border:2px solid var(--line);border-radius:var(--r);
+  background:var(--paper);padding:14px 16px;
+  font-family:inherit;font-size:15px;line-height:1.8;
+  color:var(--ink);resize:none;overflow:hidden;outline:none;
+  transition:border-color .2s;
+  margin-bottom:8px;
+}
+.free-area:focus{border-color:var(--lilac)}
+.free-area::placeholder{color:var(--sub);opacity:.55}
+
+.hint-chip{
+  display:inline-block;background:var(--peach-3);color:#A06857;
+  font-size:12px;padding:5px 12px;border-radius:99px;
+  margin-top:14px;
+}
+
+/* ───── Breath (숨 고르기) section — 단계 사이 의식적 멈춤 ───── */
+.breath{
+  background:linear-gradient(135deg, #F7F4EE 0%, #F0EBE1 100%);
+  border:1px dashed #B8C9B0;
+  border-radius:var(--r-lg);padding:30px 28px 26px;
+  margin-bottom:18px;position:relative;
+}
+.breath::before{
+  content:"· 잠깐, 숨 고르기 ·";
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--cream);padding:0 14px;
+  color:#7A8F71;font-size:11px;font-weight:600;letter-spacing:3px;
+  font-family:'Gowun Batang',serif;
+}
+.breath h4{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:17px;margin:0 0 6px;color:var(--ink);text-align:center;
+}
+.breath .breath-intro{
+  font-size:13px;color:var(--sub);line-height:1.7;
+  text-align:center;margin:0 0 18px;
+}
+.breath .breath-q{
+  font-size:15.5px;line-height:1.8;color:var(--ink);
+  margin:0 0 10px;font-weight:500;
+}
+.breath .breath-q b{color:#7A8F71}
+.breath-input{
+  width:100%;min-height:60px;resize:none;overflow:hidden;
+  border:1.5px solid #E0DDD4;border-radius:var(--r);
+  padding:12px 14px;font-family:inherit;font-size:14px;line-height:1.8;
+  color:var(--ink);outline:none;background:#fff;
+  transition:border-color .2s;
+}
+.breath-input:focus{border-color:#7A8F71}
+.breath-input::placeholder{color:var(--sub);opacity:.5}
+.breath-hint{
+  font-size:12px;color:var(--sub);margin:10px 0 0;line-height:1.7;
+}
+
+/* ───── Image generation section ───── */
+.image-gen{
+  background:linear-gradient(135deg,var(--peach-3) 0%,var(--lilac-3) 100%);
+  border-radius:var(--r-lg);padding:22px 24px;margin-bottom:18px;
+  box-shadow:var(--shadow);
+}
+.image-gen h3{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:18px;margin:0 0 4px;color:var(--ink);
+  display:flex;align-items:center;gap:6px;
+}
+.image-gen-sub{
+  color:var(--sub);font-size:13px;line-height:1.6;margin:0 0 16px;
+}
+.prompt-preview{
+  background:rgba(255,255,255,.85);border-radius:var(--r);
+  padding:14px 16px;font-size:14px;line-height:1.7;
+  color:var(--ink);white-space:pre-wrap;
+  border:1.5px dashed var(--lilac-2);
+  margin-bottom:10px;min-height:60px;
+}
+.prompt-preview.empty{color:var(--sub);font-style:italic}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn-copy{
+  background:#fff;color:var(--lilac);
+  border:1.5px solid var(--lilac-2);border-radius:99px;
+  padding:8px 16px;font-size:13px;font-weight:500;
+  cursor:pointer;transition:.2s;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.btn-copy:hover{background:var(--lilac);color:#fff;border-color:var(--lilac)}
+.btn-copy.copied{background:var(--sage);color:#fff;border-color:var(--sage)}
+.btn-generate{
+  background:var(--lilac);color:#fff;
+  border:none;border-radius:99px;
+  padding:10px 20px;font-size:14px;font-weight:600;
+  cursor:pointer;transition:.2s;
+  box-shadow:0 4px 12px rgba(var(--accent-rgb),.3);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.btn-generate:hover:not(:disabled){box-shadow:0 6px 16px rgba(var(--accent-rgb),.45)}
+.btn-generate:active{transform:scale(.97)}
+.btn-generate:disabled{background:var(--line);color:var(--sub);cursor:not-allowed;box-shadow:none}
+.external-toggle{
+  font-size:12px;color:var(--sub);margin-top:14px;
+  cursor:pointer;user-select:none;display:inline-block;
+  background:rgba(255,255,255,.5);padding:4px 12px;border-radius:99px;
+}
+.external-toggle:hover{color:var(--ink);background:#fff}
+.external-section{display:none;margin-top:10px}
+.external-section.open{display:block;animation:fadeIn .3s ease}
+
+.guide-links{
+  margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;
+}
+.guide-links a{
+  font-size:12px;color:var(--sub);background:rgba(255,255,255,.6);
+  padding:4px 10px;border-radius:99px;text-decoration:none;
+  border:1px solid var(--line);transition:.2s;
+}
+.guide-links a:hover{background:#fff;color:var(--lilac);border-color:var(--lilac-2)}
+
+.image-upload{
+  margin-top:16px;display:flex;flex-direction:column;gap:8px;
+}
+.upload-box{
+  background:rgba(255,255,255,.7);border:2px dashed var(--lilac-2);
+  border-radius:var(--r);padding:18px;text-align:center;
+  cursor:pointer;transition:.2s;
+}
+.upload-box:hover{border-color:var(--lilac);background:#fff}
+.upload-box input[type=file]{display:none}
+.upload-box .upload-ico{font-size:26px;line-height:1;display:block;margin-bottom:6px}
+.upload-box .upload-txt{font-size:13px;color:var(--sub)}
+.url-input{
+  width:100%;border:1.5px solid var(--line);border-radius:var(--r);
+  padding:10px 14px;font-family:inherit;font-size:13px;
+  background:rgba(255,255,255,.7);outline:none;color:var(--ink);
+  transition:border-color .2s;
+}
+.url-input:focus{border-color:var(--lilac);background:#fff}
+.or-divider{
+  text-align:center;font-size:11px;color:var(--sub);
+  margin:2px 0;letter-spacing:2px;
+}
+
+.image-preview{
+  margin-top:12px;
+}
+.image-preview img{
+  width:100%;max-width:480px;border-radius:var(--r);
+  display:block;margin:0 auto;
+  box-shadow:0 4px 16px rgba(var(--accent-rgb),.2);
+}
+.image-preview .remove-btn{
+  display:block;margin:10px auto 0;
+  background:transparent;border:1px solid var(--line);
+  color:var(--sub);padding:4px 12px;border-radius:99px;
+  font-size:11px;cursor:pointer;
+}
+.image-preview .remove-btn:hover{color:var(--ink);border-color:var(--ink)}
+
+/* ───── Stage skeleton placeholder ───── */
+.stage-placeholder{
+  padding:60px 30px;text-align:center;color:var(--sub);
+  background:var(--paper);border-radius:var(--r-lg);
+  border:2px dashed var(--line);
+}
+.stage-placeholder .big{font-size:48px;margin-bottom:14px;display:block}
+
+/* ───── Stage 2: step cards ───── */
+.stage2-intro{padding:20px 26px 16px}
+.stage2-intro .card-sub{margin-bottom:0}
+
+.step-card{
+  background:var(--paper);border-radius:var(--r-lg);
+  border:2px solid var(--line);
+  margin-bottom:14px;overflow:hidden;
+  transition:all .3s ease;
+}
+.step-card.locked{opacity:.45;filter:saturate(.4)}
+.step-card.locked .sc-header{cursor:not-allowed}
+.step-card.active{
+  border-color:var(--lilac);
+  box-shadow:0 6px 22px rgba(var(--accent-rgb),.2);
+}
+.step-card.completed{border-color:var(--sage);background:var(--sage-2)}
+
+.sc-header{
+  display:flex;align-items:center;gap:14px;padding:18px 22px;
+  cursor:pointer;user-select:none;
+}
+.step-card.active .sc-header{cursor:default}
+.sc-icon{font-size:28px;line-height:1}
+.sc-meta{flex:1;min-width:0}
+.sc-step{
+  font-size:11px;color:var(--sub);font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+}
+.sc-title{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:19px;margin:2px 0 0;color:var(--ink);
+  letter-spacing:-.2px;
+}
+.sc-status{
+  font-size:13px;color:var(--sub);
+  background:var(--cream);padding:4px 10px;border-radius:99px;
+  white-space:nowrap;
+}
+.step-card.completed .sc-status{
+  background:var(--sage);color:#fff;
+}
+
+.sc-body{display:none;padding:0 22px 14px}
+.step-card.active .sc-body{display:block;animation:fadeIn .3s ease}
+
+.sc-question{font-size:16px;font-weight:500;margin:0 0 6px;color:var(--ink)}
+.sc-hint{font-size:13px;color:var(--sub);margin:0 0 14px;line-height:1.6}
+
+/* 카드 1: 조형 축 참고 패널 */
+.axes-panel{
+  background:var(--cream);border:1px solid var(--lilac-3);
+  border-radius:var(--r);padding:12px 14px;margin:0 0 14px;
+}
+.axes-row{
+  display:flex;align-items:baseline;gap:10px;
+  padding:5px 0;font-size:13px;line-height:1.6;
+}
+.axes-row + .axes-row{border-top:1px dashed var(--line)}
+.axes-label{
+  flex:0 0 60px;font-weight:600;color:var(--lilac);
+  font-size:12px;letter-spacing:.3px;
+}
+.axes-items{color:var(--ink);font-size:13px}
+
+/* 카드 2, 3: 사적 영역 라벨 (현재 안 쓰지만 필요시 활성화) */
+.private-badge{
+  display:inline-block;background:#F7F4EE;color:#7A8F71;
+  border:1px dashed #B8C9B0;border-radius:99px;
+  padding:3px 10px;font-size:11px;font-weight:600;
+  letter-spacing:.3px;margin-bottom:10px;
+}
+
+.sc-input{
+  width:100%;min-height:120px;resize:none;overflow:hidden;
+  border:1.5px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;font-family:inherit;font-size:15px;line-height:1.7;
+  color:var(--ink);outline:none;background:var(--cream);
+  transition:border-color .2s,background .2s;
+}
+.sc-input:focus{border-color:var(--lilac);background:#fff}
+.sc-input::placeholder{color:var(--sub);opacity:.55}
+
+.sc-counter{
+  display:flex;justify-content:flex-end;margin-top:6px;
+  font-size:12px;color:var(--sub);
+}
+.sc-counter.ok{color:var(--sage)}
+
+.sc-example{margin-top:14px}
+.sc-example summary{
+  cursor:pointer;padding:7px 14px;background:var(--peach-3);
+  border-radius:99px;display:inline-flex;align-items:center;gap:4px;
+  color:#A06857;font-weight:500;font-size:13px;
+  list-style:none;user-select:none;
+}
+.sc-example summary::-webkit-details-marker{display:none}
+.sc-example[open] summary{background:var(--peach-2)}
+.sc-example-body{
+  margin-top:10px;padding:14px 16px;background:var(--peach-3);
+  border-radius:var(--r);line-height:1.75;font-size:14px;color:#6E4B3E;
+  font-style:italic;
+}
+
+.sc-summary{
+  display:none;margin:0 22px 16px;padding:14px 16px;
+  background:rgba(255,255,255,.6);border-radius:var(--r);
+  font-size:14px;line-height:1.7;color:var(--ink);white-space:pre-wrap;
+  border-left:3px solid var(--sage);
+}
+.step-card.completed .sc-summary{display:block}
+
+.sc-foot{
+  display:none;justify-content:space-between;align-items:center;
+  padding:4px 22px 18px;gap:8px;
+}
+.step-card.active .sc-foot{display:flex}
+.btn-card-next{padding:10px 20px;font-size:14px;margin-left:auto}
+.btn-card-back{
+  background:transparent;color:var(--sub);
+  border:1px solid var(--line);border-radius:99px;
+  padding:8px 16px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+.btn-card-back:hover{color:var(--ink)}
+.step-card.completed .sc-foot{display:flex;padding-bottom:14px}
+.btn-card-edit{
+  background:transparent;color:var(--sub);
+  border:1px solid var(--sage);border-radius:99px;
+  padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;
+  margin-left:auto;
+}
+.btn-card-edit:hover{background:#fff;color:var(--ink)}
+.step-card.active .btn-card-edit{display:none}
+.step-card.completed .btn-card-next{display:none}
+
+/* ───── Stage 3: 4질문 섹션 ───── */
+
+/* ───── 좌우 분할 레이아웃 (참고용 ↔ 쓰는 공간) ───── */
+.split{
+  display:grid;
+  grid-template-columns:minmax(260px, 0.6fr) 1.8fr;
+  gap:24px;align-items:start;margin-bottom:18px;
+}
+.split-left{
+  position:sticky;top:14px;
+  max-height:calc(100vh - 28px);
+  overflow-y:auto;
+  padding:2px;      /* 포커스 링 잘리지 않게 */
+}
+.split-left::-webkit-scrollbar{width:6px}
+.split-left::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.split-right{min-width:0}   /* grid overflow 방지 */
+.split-right > * + *{margin-top:14px}
+
+/* 태블릿 이하: 단일 컬럼으로 */
+@media(max-width:1024px){
+  .split{grid-template-columns:1fr}
+  .split-left{position:static;max-height:none;overflow:visible}
+}
+
+/* ───── 통합 참고 패널 (split-left 안) ───── */
+.ref-panel{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  padding:18px 20px;
+  box-shadow:var(--shadow);
+}
+.ref-panel-title{
+  font-family:'Gowun Batang',serif;
+  font-size:13px;font-weight:600;
+  color:var(--sub);
+  margin:0 0 14px;
+  letter-spacing:.5px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+}
+.ref-section + .ref-section{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px dashed var(--line);
+}
+.ref-section-label{
+  font-size:12px;color:var(--sub);
+  font-weight:600;margin:0 0 8px;letter-spacing:.2px;
+}
+.ref-section-content{
+  font-size:13.5px;line-height:1.75;color:var(--ink);
+  white-space:pre-wrap;
+  max-height:240px;overflow-y:auto;
+  padding-right:4px;
+}
+.ref-section-content::-webkit-scrollbar{width:5px}
+.ref-section-content::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.ref-section-content.empty{color:var(--sub);font-size:12.5px}
+
+.ref-section-image{text-align:center}
+.ref-section-image img{
+  width:100%;border-radius:var(--r);
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.15);
+  display:block;
+}
+.ref-section-image.empty{
+  padding:24px 12px;text-align:center;color:var(--sub);
+  font-size:12.5px;background:var(--cream);
+  border-radius:var(--r);line-height:1.6;
+}
+
+/* 5단계 여정 갤러리: 3장 가로 배치 */
+.journey-gallery{
+  display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;
+  margin:18px 0 4px;
+}
+.journey-gallery .jg-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.journey-gallery .jg-item img{
+  width:100%;border-radius:var(--r);aspect-ratio:1/1;object-fit:cover;
+  box-shadow:0 4px 12px rgba(var(--accent-rgb),.18);
+}
+.journey-gallery .jg-label{
+  font-size:12px;color:var(--sub);font-weight:500;
+}
+.journey-gallery .jg-placeholder{
+  aspect-ratio:1/1;border:2px dashed var(--line);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sub);font-size:11px;text-align:center;padding:10px;
+  width:100%;
+}
+@media(max-width:620px){
+  .journey-gallery{grid-template-columns:1fr}
+}
+/* split-left 내부에선 세로 스택 (좁은 컬럼이라) */
+.split-left .journey-gallery{grid-template-columns:1fr}
+/* 텍스트만 있을 때 (이미지 없을 때) */
+.journey-gallery:not(:has(.jg-item)):not(:has(.jg-placeholder)){
+  padding:30px;text-align:center;color:var(--sub);
+  border:2px dashed var(--line);border-radius:var(--r);
+  font-size:13px;display:block;
+}
+
+/* ───── Stage 4: Claude chat ───── */
+.chat-header{
+  display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;
+}
+.btn-reset-chat{
+  background:transparent;border:1px solid var(--line);
+  color:var(--sub);padding:5px 12px;border-radius:99px;
+  font-size:11px;cursor:pointer;font-family:inherit;transition:.2s;
+}
+.btn-reset-chat:hover{
+  background:#fff;color:var(--ink);border-color:var(--lilac-2)
+}
+
+/* 대화 정리 CTA — 대화 끝나는 지점에 눈에 띄게 */
+.summary-cta{
+  margin:18px 0 8px;text-align:center;
+  padding:16px 20px;
+  background:linear-gradient(135deg, var(--peach-3) 0%, var(--lilac-3) 100%);
+  border-radius:var(--r-lg);
+  border:1px dashed var(--peach-2);
+}
+.btn-summary-cta{
+  background:#fff;
+  border:1.5px solid var(--peach-2);
+  color:#A06857;font-weight:600;
+  padding:10px 22px;border-radius:99px;
+  font-size:14px;cursor:pointer;font-family:inherit;
+  transition:.2s;
+  box-shadow:0 2px 8px rgba(245,198,176,.3);
+}
+.btn-summary-cta:hover{
+  background:var(--peach-2);color:#fff;
+  transform:translateY(-1px);
+  box-shadow:0 4px 14px rgba(245,198,176,.4);
+}
+.btn-summary-cta:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.summary-cta-hint{
+  margin:8px 0 0;font-size:12px;color:var(--sub);
+}
+
+/* 대화 정리 박스 */
+.dialogue-summary{
+  background:linear-gradient(135deg, var(--peach-3) 0%, var(--lilac-3) 100%);
+  border-radius:var(--r-lg);padding:22px 24px;margin:18px 0 12px;
+  box-shadow:var(--shadow);
+}
+.dialogue-summary .ds-head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;
+}
+.dialogue-summary .ds-title{
+  font-family:'Gowun Batang',serif;font-weight:700;font-size:16px;color:var(--ink);
+}
+.btn-ds-refresh{
+  background:transparent;border:1px solid var(--lilac-2);
+  color:var(--lilac);padding:4px 10px;border-radius:99px;
+  font-size:12px;cursor:pointer;font-family:inherit;transition:.2s;
+}
+.btn-ds-refresh:hover{background:#fff}
+.ds-content{
+  background:var(--paper);border-radius:var(--r);padding:18px 22px;
+  font-size:14px;line-height:1.8;color:var(--ink);
+}
+.ds-content .ds-h3{
+  font-family:'Gowun Batang',serif;font-size:15px;font-weight:700;
+  color:var(--lilac);margin:18px 0 8px;padding-bottom:4px;
+  border-bottom:1px dashed var(--lilac-2);
+}
+.ds-content .ds-h3:first-child{margin-top:0}
+.ds-content .ds-list{padding-left:18px;margin:6px 0 12px}
+.ds-content .ds-list li{margin-bottom:6px;line-height:1.7}
+.ds-content .ds-p{margin:6px 0;line-height:1.7}
+.ds-content strong{color:var(--ink);font-weight:600}
+.ds-content em{color:var(--sub);font-style:italic}
+.ds-loading{
+  text-align:center;color:var(--sub);padding:20px;font-size:13px;
+}
+.chat-container{
+  display:flex;flex-direction:column;gap:12px;
+  max-height:500px;overflow-y:auto;padding:4px;
+  margin-bottom:16px;
+}
+.chat-msg{
+  padding:14px 18px;border-radius:var(--r-lg);line-height:1.7;
+  font-size:14.5px;max-width:88%;animation:fadeIn .3s ease;
+  white-space:pre-wrap;
+}
+.chat-msg.assistant{
+  background:var(--lilac-3);color:var(--ink);
+  align-self:flex-start;border-top-left-radius:6px;
+}
+.chat-msg.user{
+  background:var(--sage-2);color:var(--ink);
+  align-self:flex-end;border-top-right-radius:6px;
+}
+.chat-msg.typing{opacity:.6;font-style:italic}
+
+.chat-input-area{
+  display:flex;gap:8px;align-items:flex-end;
+}
+.chat-input{
+  flex:1;min-height:70px;max-height:320px;resize:none;overflow-y:auto;
+  border:1.5px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;font-family:inherit;font-size:15px;line-height:1.7;
+  color:var(--ink);outline:none;background:var(--cream);
+  transition:border-color .2s,background .2s;
+}
+.chat-input:focus{border-color:var(--lilac);background:#fff}
+.btn-send{
+  background:var(--lilac);color:#fff;border:none;border-radius:var(--r);
+  padding:14px 20px;font-size:14px;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+  box-shadow:0 4px 12px rgba(var(--accent-rgb),.3);
+}
+.btn-send:disabled{background:var(--line);color:var(--sub);cursor:not-allowed;box-shadow:none}
+
+.turn-indicator{
+  text-align:right;font-size:12px;color:var(--sub);margin-top:8px;
+}
+
+.final-prompt-box{
+  background:var(--lilac-3);border-radius:var(--r-lg);
+  padding:20px 22px;margin-top:14px;
+}
+.final-prompt-box h4{
+  margin:0 0 6px;font-size:15px;color:var(--ink);font-weight:600;
+}
+.final-prompt-box p{font-size:13px;color:var(--sub);margin:0 0 12px;line-height:1.6}
+.prev-prompt-ref{
+  background:rgba(255,255,255,.6);border-radius:var(--r);
+  padding:12px 14px;margin-bottom:12px;
+}
+.prev-prompt-label{
+  font-size:11px;color:var(--sub);font-weight:600;
+  letter-spacing:.5px;margin-bottom:6px;display:block;
+}
+.prev-prompt-box{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13px;line-height:1.65;color:var(--ink);
+  white-space:pre-wrap;max-height:160px;overflow-y:auto;
+  margin-bottom:8px;
+}
+.prev-prompt-box.empty{color:var(--sub);font-style:italic}
+.btn-use-prev{
+  background:var(--sage-2);color:#3A5A3A;
+  border:1px solid var(--sage);border-radius:99px;
+  padding:6px 14px;font-size:12px;cursor:pointer;
+  font-family:inherit;transition:.2s;
+}
+.btn-use-prev:hover:not(:disabled){background:var(--sage);color:#fff}
+.btn-use-prev:disabled{opacity:.4;cursor:not-allowed}
+.final-prompt-textarea{
+  width:100%;min-height:140px;resize:none;overflow:hidden;
+  border:1.5px solid var(--lilac-2);border-radius:var(--r);
+  padding:12px 14px;font-family:inherit;font-size:14px;line-height:1.7;
+  color:var(--ink);outline:none;background:#fff;
+}
+.final-prompt-textarea:focus{border-color:var(--lilac)}
+
+/* ───── Stage 5: category sections + PDF ───── */
+.category-section{
+  background:var(--paper);border-radius:var(--r-lg);
+  padding:26px 26px;box-shadow:var(--shadow);margin-bottom:18px;
+  border-left:4px solid var(--lilac);
+}
+.category-section:nth-of-type(2){border-left-color:var(--peach)}
+.category-section:nth-of-type(3){border-left-color:var(--sage)}
+.category-section:nth-of-type(4){border-left-color:var(--lilac-2)}
+
+.cat-title{
+  font-family:'Gowun Batang',serif;font-weight:700;
+  font-size:19px;margin:0 0 4px;color:var(--ink);
+  display:flex;align-items:center;gap:8px;
+}
+.cat-sub{color:var(--sub);font-size:13px;margin:0 0 18px;line-height:1.6}
+
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field-hint{
+  font-size:12px;color:var(--sub);margin:0 0 8px;line-height:1.6;
+}
+.field-label{
+  display:block;font-size:14px;color:var(--ink);font-weight:500;
+  margin-bottom:6px;
+}
+.field-auto{
+  background:var(--cream);border-radius:var(--r);padding:12px 14px;
+  font-size:14px;line-height:1.65;color:var(--ink);white-space:pre-wrap;
+  border:1.5px solid var(--line);
+}
+.field-auto.empty{color:var(--sub);font-style:italic}
+.reflection-input{
+  width:100%;min-height:90px;resize:none;overflow:hidden;
+  border:1.5px solid var(--line);border-radius:var(--r);
+  padding:12px 14px;font-family:inherit;font-size:14px;line-height:1.7;
+  color:var(--ink);outline:none;background:var(--cream);
+  transition:border-color .2s,background .2s;
+}
+.reflection-input:focus{border-color:var(--lilac);background:#fff}
+
+.submit-panel{
+  background:linear-gradient(135deg,var(--lilac-3) 0%,var(--peach-3) 100%);
+  border-radius:var(--r-lg);padding:28px 26px;text-align:center;
+  box-shadow:var(--shadow);
+}
+.submit-panel h3{
+  font-family:'Gowun Batang',serif;font-size:20px;margin:0 0 6px;color:var(--ink);
+}
+.submit-panel p{color:var(--sub);font-size:13px;margin:0 0 18px;line-height:1.6}
+.btn-pdf{
+  background:var(--lilac);color:#fff;border:none;border-radius:99px;
+  padding:14px 30px;font-size:15px;font-weight:600;cursor:pointer;
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.35);
+  display:inline-flex;align-items:center;gap:6px;
+  transition:.2s;
+}
+.btn-pdf:hover{box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
+.btn-pdf:active{transform:scale(.97)}
+.btn-pdf:disabled{background:var(--line);color:var(--sub);cursor:not-allowed;box-shadow:none}
+
+/* ───── Bottom nav ───── */
+.nav-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  background:rgba(253,250,245,.92);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:12px 18px;
+}
+.nav-inner{
+  max-width:1400px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 22px;border-radius:99px;font-size:15px;font-weight:600;
+  border:none;cursor:pointer;transition:.2s transform,.2s box-shadow;
+  font-family:inherit;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{
+  background:var(--lilac);color:#fff;
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.35);
+}
+.btn-primary:hover{box-shadow:0 6px 18px rgba(var(--accent-rgb),.45)}
+.btn-primary:disabled{
+  background:var(--line);color:var(--sub);cursor:not-allowed;box-shadow:none;
+}
+.btn-ghost{background:transparent;color:var(--sub)}
+.btn-ghost:hover{color:var(--ink)}
+.nav-progress{font-size:12px;color:var(--sub)}
+
+/* ───── Toast ───── */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 20px;
+  border-radius:99px;font-size:13px;opacity:0;pointer-events:none;
+  transition:opacity .3s;z-index:20;
+}
+.toast.show{opacity:1}
+
+/* ───── 브라우저 인쇄 모드 — PDF 저장 (Ctrl+P 대체) ───── */
+@media print {
+  /* 앱 UI는 모두 숨기고 PDF 컨텐츠만 표시 */
+  body > *:not(#pdfTarget){display:none !important}
+  body > #pdfTarget{
+    position:static !important;
+    left:auto !important;top:auto !important;
+    width:100% !important;
+    opacity:1 !important;
+    transform:none !important;
+  }
+  #pdfTarget .pdf-root{
+    width:100% !important;max-width:100% !important;
+    padding:10mm 12mm !important;margin:0 !important;
+    box-shadow:none !important;background:#fff !important;
+  }
+  /* 페이지 여백 */
+  @page{size:A4;margin:0}
+}
+
+/* PDF 출력 전용 스타일 */
+.pdf-root{
+  font-family:'Noto Sans KR',sans-serif;color:#3F3A4A;
+  padding:30px 36px;background:#fff;width:760px;
+  /* 긴 단어·URL이 컨테이너 넘지 않게 */
+  overflow-wrap:anywhere;word-break:break-word;
+}
+.pdf-root h1{font-family:'Gowun Batang',serif;font-size:24px;margin:0 0 6px;text-align:center;page-break-after:avoid}
+.pdf-root .pdf-sub{text-align:center;color:#8B869A;font-size:12px;margin-bottom:20px}
+.pdf-root h2{
+  font-family:'Gowun Batang',serif;font-size:17px;margin:22px 0 8px;
+  border-bottom:2px solid #E4D9F7;padding-bottom:4px;
+}
+.pdf-root h3{
+  font-size:13px;margin:12px 0 4px;color:#5A4E6E;
+}
+.pdf-root p{font-size:12px;line-height:1.7;margin:4px 0;white-space:pre-wrap}
+.pdf-root .pdf-img{text-align:center;margin:10px 0}
+.pdf-root .pdf-img img{
+  width:280px;height:280px;object-fit:cover;
+  border-radius:6px;display:block;margin:0 auto;
+}
+.pdf-root .pdf-img .cap{font-size:10.5px;color:#8B869A;margin-top:4px}
+.pdf-root .pdf-prompt{
+  background:#F4EEFB;padding:10px 12px;border-radius:6px;
+  font-size:11.5px;line-height:1.7;white-space:pre-wrap;
+}
+.pdf-root .pdf-answer{
+  background:#FDFAF5;border-left:3px solid #B8D4B8;
+  padding:8px 12px;margin:4px 0;font-size:12px;line-height:1.7;
+  white-space:pre-wrap;
+}
+.pdf-root .pdf-chat-msg{
+  padding:7px 11px;margin:4px 0;border-radius:6px;
+  font-size:11.5px;line-height:1.6;white-space:pre-wrap;
+}
+.pdf-root .pdf-chat-msg.assistant{background:#F4EEFB}
+.pdf-root .pdf-chat-msg.user{background:#D9E8D9}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ───── Header ───── -->
+  <header class="header">
+    <button class="btn-reset" id="btnReset" title="모든 진행 내용을 지우고 처음부터 다시 시작">🔄 처음부터</button>
+    <h1>🎨 프롬프트 아틀리에</h1>
+    <p class="sub">내 감정을 언어로, 언어를 이미지로, 이미지를 다시 내 손으로</p>
+    <p class="motto">AI를 잘 쓰는 사람이 아니라, AI를 '왜 쓰는지' 아는 사람을 만드는 수업</p>
+
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="1">
+        <span class="step-num">1</span><span class="step-label">표현 의도</span>
+      </div>
+      <span class="step-arrow">▸</span>
+      <div class="step" data-step="2">
+        <span class="step-num">2</span><span class="step-label">구체화</span>
+      </div>
+      <span class="step-arrow">▸</span>
+      <div class="step" data-step="3">
+        <span class="step-num">3</span><span class="step-label">성찰</span>
+      </div>
+      <span class="step-arrow">▸</span>
+      <div class="step" data-step="4">
+        <span class="step-num">4</span><span class="step-label">재구체화</span>
+      </div>
+      <span class="step-arrow">▸</span>
+      <div class="step" data-step="5">
+        <span class="step-num">5</span><span class="step-label">여정 성찰</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ───── Stage 1: 표현 의도 ───── -->
+  <section class="stage active" data-stage="1">
+    <div class="card">
+      <h2 class="card-title">🌱 1단계. 내가 표현하고 싶은 것</h2>
+      <p class="card-sub">
+        지금 떠오르는 내용을 <b>평소 AI에게 말하듯이</b> 자유롭게 적어봅시다.<br>
+        감정이든, 풍경이든, 주제든, 분위기든 괜찮습니다. 지금 이 글이 곧 <b>나의 출발점</b>이 됩니다.
+      </p>
+
+      <textarea id="intentRaw" class="free-area"
+        placeholder="예시: 쓸쓸한 느낌의 밤 골목을 그려줘 / 혼자 벤치에 앉아있는 아이가 보고 싶어 / 차갑고 조용한 파란 방..."></textarea>
+
+      <div class="hint-chip">💡 짧거나 두서가 없어도 괜찮습니다. 이 글을 다듬어가는 과정 자체가 수업입니다.</div>
+    </div>
+
+    <!-- 호흡 0: 자기 성공 기준 세우기 (이미지 생성 전 멈춤) -->
+    <div class="breath" id="breath0">
+      <h4>나의 성공 기준</h4>
+      <p class="breath-intro">
+        AI에게 맡기기 전에, 내 기준을 먼저 적어봅시다.
+      </p>
+      <p class="breath-q">
+        내 그림이 잘 나왔다고 느끼려면, <b>어떤 부분이 어떻게 보여야 할까?</b>
+      </p>
+      <textarea class="breath-input" id="breathCriteria" data-breath="criteria"
+        placeholder="예: 색이 따뜻했으면. 혼자인 느낌은 남되, 쓸쓸하기보단 포근했으면. 빛이 조용하고 낮았으면."></textarea>
+      <p class="breath-hint">
+        💭 이 기준은 나중에 AI의 그림을 읽어낼 때의 판단 기준이 됩니다. 정답은 없으며, 막연해도 괜찮습니다.
+      </p>
+    </div>
+
+    <!-- 1차 이미지 생성 -->
+    <div class="image-gen" id="imageGen1">
+      <h3>🖼️ 1차 이미지 생성</h3>
+      <p class="image-gen-sub">
+        지금까지 적은 내용으로 만든 첫 프롬프트입니다. 이미지를 생성하거나, 외부 AI 도구에 복사해 직접 만들 수도 있습니다.
+      </p>
+      <div class="prompt-preview empty" id="prompt1">(1단계를 먼저 작성하면 프롬프트가 여기에 표시됩니다)</div>
+      <div class="btn-row">
+        <button class="btn-generate" id="genBtn1" disabled>🎨 이미지 생성하기</button>
+        <button class="btn-copy" id="copyBtn1" disabled>📋 프롬프트 복사</button>
+      </div>
+
+      <div class="image-preview" id="imgPreview1"></div>
+
+      <span class="external-toggle" data-toggle="1">🔧 외부 AI로 직접 만들기 ▾</span>
+      <div class="external-section" id="external1">
+        <div class="guide-links">
+          <a href="https://chat.openai.com/" target="_blank" rel="noopener">ChatGPT</a>
+          <a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini</a>
+          <a href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Copilot</a>
+        </div>
+        <div class="image-upload">
+          <label class="upload-box" for="imgUpload1">
+            <span class="upload-ico">📁</span>
+            <span class="upload-txt">이미지 파일 업로드 (클릭)</span>
+            <input type="file" id="imgUpload1" accept="image/*">
+          </label>
+          <div class="or-divider">OR</div>
+          <input type="text" class="url-input" id="imgUrl1" placeholder="이미지 URL 붙여넣기">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Stage 2: 구체화 ───── -->
+  <section class="stage" data-stage="2">
+    <div class="card stage2-intro">
+      <h2 class="card-title">🌸 2단계. 조형 언어로 번역하기</h2>
+      <p class="card-sub">
+        1단계에서 쓴 내용을 <b>미술의 언어로 한 층 더 발전시켜봅시다</b>.<br>
+        세 카드를 차근차근 열어갑니다. 앞 카드를 완성하면 다음이 열려요.
+      </p>
+    </div>
+
+    <div class="split">
+      <div class="split-left">
+        <div class="ref-panel">
+          <h4 class="ref-panel-title">📚 참고</h4>
+          <div class="ref-section">
+            <div class="ref-section-label">📝 1단계에 쓴 내용 — 출발점</div>
+            <div class="ref-section-content empty" id="prevWritingContent2">(1단계를 작성하면 여기에 표시돼요)</div>
+          </div>
+          <div class="ref-section">
+            <div class="ref-section-label">🖼️ 1차 이미지</div>
+            <div class="ref-section-image empty" id="refImage2">(1단계에서 이미지를 생성하면 여기에 표시돼요)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-right">
+
+    <div class="step-card active" data-sc="1">
+      <div class="sc-header">
+        <span class="sc-icon">🎨</span>
+        <div class="sc-meta">
+          <div class="sc-step">첫 번째 카드</div>
+          <h3 class="sc-title">조형 언어로 번역하기</h3>
+        </div>
+        <span class="sc-status">진행 중</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">1단계에 쓴 내용을 <b>조형 요소·원리</b>로 옮겨봅시다.</p>
+        <p class="sc-hint">
+          아래 항목 중에서 <b>끌리는 것 2~3개만</b> 골라 풀어 써도 됩니다. 다 채울 필요는 없습니다.
+        </p>
+
+        <div class="axes-panel">
+          <div class="axes-row">
+            <span class="axes-label">조형 요소</span>
+            <span class="axes-items">점 · 선 · 면 · 형태 · 명암 · 색 · 질감 · 공간</span>
+          </div>
+          <div class="axes-row">
+            <span class="axes-label">조형 원리</span>
+            <span class="axes-items">통일 · 변화 · 균형 · 강조 · 비례 · 율동 · 움직임 · 조화 · 대비</span>
+          </div>
+          <div class="axes-row">
+            <span class="axes-label">그 외</span>
+            <span class="axes-items">색 온도 · 분위기 · 빛의 질 · 시점</span>
+          </div>
+        </div>
+
+        <textarea class="sc-input" data-field="forms"
+          placeholder="예: 색은 차갑게 식어가는 파랑 — 채도 낮게. 빛은 뒤에서 낮게 들어오는 역광. 구도는 인물을 오른쪽 아래로 밀어 빈 공간을 크게."></textarea>
+        <div class="sc-counter" data-counter="forms">0자 / 10자 이상</div>
+
+        <details class="sc-example">
+          <summary>💡 예시 보기</summary>
+          <div class="sc-example-body">
+            "차가운 파랑 · 보라 계열의 색. 채도는 낮고 명암 대비는 강하게.
+            빛은 한 방향에서 낮게 들어오는 역광. 공간은 인물보다 훨씬 크게, 인물은 작게.
+            질감은 거친 연필 스케치 같은 느낌."
+          </div>
+        </details>
+      </div>
+      <div class="sc-summary" data-summary="forms"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit="1">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next="1" disabled>다음 카드로 →</button>
+      </div>
+    </div>
+
+    <div class="step-card locked" data-sc="2">
+      <div class="sc-header">
+        <span class="sc-icon">🔮</span>
+        <div class="sc-meta">
+          <div class="sc-step">두 번째 카드</div>
+          <h3 class="sc-title">은유로 압축하기</h3>
+        </div>
+        <span class="sc-status">잠김</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">내 감정·주제를 <b>한 사물이나 풍경</b>으로 옮긴다면?</p>
+        <p class="sc-hint">
+          정답은 없어요. 떠오르는 대로 자유롭게 적어봅시다.
+        </p>
+        <textarea class="sc-input" data-field="metaphor"
+          placeholder="예: 녹아내리는 양초 하나. 비 맞은 나무 의자. 반만 열린 문. 깨진 창문 너머의 노을."></textarea>
+        <div class="sc-counter" data-counter="metaphor">0자 / 10자 이상</div>
+
+        <details class="sc-example">
+          <summary>💡 예시 보기</summary>
+          <div class="sc-example-body">
+            "한참 전에 끈 촛불. 심지 끝엔 아직 희미한 연기가 남아있고,
+            양초의 옆면엔 녹다 멈춘 촛농이 그대로 굳어버린 모양."
+          </div>
+        </details>
+      </div>
+      <div class="sc-summary" data-summary="metaphor"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit="2">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next="2" disabled>다음 카드로 →</button>
+      </div>
+    </div>
+
+    <div class="step-card locked" data-sc="3">
+      <div class="sc-header">
+        <span class="sc-icon">🫀</span>
+        <div class="sc-meta">
+          <div class="sc-step">세 번째 카드</div>
+          <h3 class="sc-title">나만 아는 것</h3>
+        </div>
+        <span class="sc-status">잠김</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">이 그림에 꼭 담고 싶은, <b>나만 아는 구체적인 것</b> 하나는?</p>
+        <p class="sc-hint">
+          디테일·기억·감각·사물·분위기 등 무엇이든 괜찮아요. AI가 지어낼 수 없는, 나에게만 있는 무언가를 적어봅시다.
+        </p>
+        <textarea class="sc-input" data-field="personal"
+          placeholder="예: 어릴 때 살던 집 현관문의 회색빛. 내가 그날 들었던 음악의 느린 베이스. 새벽 네 시의 공기 밀도."></textarea>
+        <div class="sc-counter" data-counter="personal">0자 / 10자 이상</div>
+
+        <details class="sc-example">
+          <summary>💡 예시 보기</summary>
+          <div class="sc-example-body">
+            "내 방 책상 위에 오래 놓여있던 머그컵의 손잡이 자국. 손가락이 수천 번 지나가며 생긴,
+            미묘하게 파인 그 홈. 거기에 항상 걸리는 새끼손가락 감촉."
+          </div>
+        </details>
+      </div>
+      <div class="sc-summary" data-summary="personal"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit="3">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next="3" disabled>세 카드 완료! ✓</button>
+      </div>
+    </div>
+
+    <!-- 2차 이미지 생성 (오른쪽 컬럼 안에) -->
+    <div class="image-gen" id="imageGen2">
+      <h3>🖼️ 2차 이미지 생성</h3>
+      <p class="image-gen-sub">
+        조형 언어까지 얹은 두 번째 프롬프트입니다. 은유와 나만 아는 것은 <b>AI에게 직접 그리지 말고 분위기로만 스며들게</b> 지시됩니다.
+      </p>
+      <div class="prompt-preview empty" id="prompt2">(2단계 세 카드를 모두 완성하면 프롬프트가 여기 표시됩니다)</div>
+      <div class="btn-row">
+        <button class="btn-generate" id="genBtn2" disabled>🎨 이미지 생성하기</button>
+        <button class="btn-copy" id="copyBtn2" disabled>📋 프롬프트 복사</button>
+      </div>
+
+      <div class="image-preview" id="imgPreview2"></div>
+
+      <span class="external-toggle" data-toggle="2">🔧 외부 AI로 직접 만들기 ▾</span>
+      <div class="external-section" id="external2">
+        <div class="guide-links">
+          <a href="https://chat.openai.com/" target="_blank" rel="noopener">ChatGPT</a>
+          <a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini</a>
+          <a href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Copilot</a>
+        </div>
+        <div class="image-upload">
+          <label class="upload-box" for="imgUpload2">
+            <span class="upload-ico">📁</span>
+            <span class="upload-txt">이미지 파일 업로드 (클릭)</span>
+            <input type="file" id="imgUpload2" accept="image/*">
+          </label>
+          <div class="or-divider">OR</div>
+          <input type="text" class="url-input" id="imgUrl2" placeholder="이미지 URL 붙여넣기">
+        </div>
+      </div>
+    </div>
+      </div><!-- /.split-right -->
+    </div><!-- /.split -->
+  </section>
+
+  <!-- ───── Stage 3: 성찰 ───── -->
+  <section class="stage" data-stage="3">
+    <div class="card">
+      <h2 class="card-title">🔍 3단계. 성찰</h2>
+      <p class="card-sub">
+        AI가 만들어준 이미지를 천천히 바라보며, 네 가지 질문에 답해봅시다.
+      </p>
+    </div>
+
+    <div class="split">
+      <div class="split-left">
+        <div class="ref-panel">
+          <h4 class="ref-panel-title">📚 참고</h4>
+          <div class="ref-section">
+            <div class="ref-section-label">🖼️ 2차 이미지</div>
+            <div class="ref-section-image empty" id="refImage3">(2단계에서 이미지를 생성하면 여기에 표시돼요)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-right">
+
+    <div class="step-card active" data-sc3="1">
+      <div class="sc-header">
+        <span class="sc-icon">👁️</span>
+        <div class="sc-meta">
+          <div class="sc-step">첫 번째 질문</div>
+          <h3 class="sc-title">첫인상</h3>
+        </div>
+        <span class="sc-status">진행 중</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">결과물을 처음 마주한 순간, 어떤 느낌이 들었나요?</p>
+        <p class="sc-hint">판단하기 전의 첫 감각을 적어봅시다.</p>
+        <textarea class="sc-input" data-s3="impression"
+          placeholder="예: 내가 상상했던 것보다 훨씬 조용한 느낌이었다. 색이 생각보다 차가웠다."></textarea>
+        <div class="sc-counter" data-counter-s3="impression">0자 / 10자 이상</div>
+      </div>
+      <div class="sc-summary" data-summary-s3="impression"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit-s3="1">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next-s3="1" disabled>다음 질문으로 →</button>
+      </div>
+    </div>
+
+    <div class="step-card locked" data-sc3="2">
+      <div class="sc-header">
+        <span class="sc-icon">✨</span>
+        <div class="sc-meta">
+          <div class="sc-step">두 번째 질문</div>
+          <h3 class="sc-title">생각보다 잘 표현된 부분</h3>
+        </div>
+        <span class="sc-status">잠김</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">AI가 내 프롬프트를 받아 생각보다 잘 표현했다고 느낀 부분은?</p>
+        <p class="sc-hint">색감·구도·분위기 등 구체적으로 짚어봅시다.</p>
+        <textarea class="sc-input" data-s3="good"
+          placeholder="예: 가로등의 노란빛과 보라색 하늘의 대비가 내가 느낀 쓸쓸함의 온도를 비슷하게 담아냈다."></textarea>
+        <div class="sc-counter" data-counter-s3="good">0자 / 10자 이상</div>
+      </div>
+      <div class="sc-summary" data-summary-s3="good"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit-s3="2">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next-s3="2" disabled>다음 질문으로 →</button>
+      </div>
+    </div>
+
+    <div class="step-card locked" data-sc3="3">
+      <div class="sc-header">
+        <span class="sc-icon">🌀</span>
+        <div class="sc-meta">
+          <div class="sc-step">세 번째 질문</div>
+          <h3 class="sc-title">내 의도와 다르게 표현된 부분</h3>
+        </div>
+        <span class="sc-status">잠김</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">반대로, 내 의도와 다르게 표현된 부분은?</p>
+        <p class="sc-hint">틀렸다기보다, 어긋난 지점을 찾아봅시다.</p>
+        <textarea class="sc-input" data-s3="gap"
+          placeholder="예: 인물이 너무 또렷하게 그려져서, 내가 생각한 '혼자인 고요함'보다는 외로워 보이는 쪽이 되었다."></textarea>
+        <div class="sc-counter" data-counter-s3="gap">0자 / 10자 이상</div>
+      </div>
+      <div class="sc-summary" data-summary-s3="gap"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit-s3="3">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next-s3="3" disabled>다음 질문으로 →</button>
+      </div>
+    </div>
+
+    <div class="step-card locked" data-sc3="4">
+      <div class="sc-header">
+        <span class="sc-icon">🪞</span>
+        <div class="sc-meta">
+          <div class="sc-step">네 번째 질문</div>
+          <h3 class="sc-title">AI가 내 프롬프트를 이해한 방식</h3>
+        </div>
+        <span class="sc-status">잠김</span>
+      </div>
+      <div class="sc-body">
+        <p class="sc-question">AI는 내 프롬프트를 어떤 식으로 이해한 것 같나요?</p>
+        <p class="sc-hint">결과 이미지를 천천히 들여다보며, AI가 읽어낸 '내 말'의 모습을 적어봅시다.</p>
+        <textarea class="sc-input" data-s3="interpretation"
+          placeholder="예: AI는 '쓸쓸함'이라는 단어를 '혼자 있는 장면'으로 받아들인 것 같다. 감정의 질감보다 상황을 먼저 그린다고 느꼈다."></textarea>
+        <div class="sc-counter" data-counter-s3="interpretation">0자 / 10자 이상</div>
+      </div>
+      <div class="sc-summary" data-summary-s3="interpretation"></div>
+      <div class="sc-foot">
+        <button class="btn-card-edit" data-edit-s3="4">✏️ 수정하기</button>
+        <button class="btn btn-primary btn-card-next" data-next-s3="4" disabled>성찰 완료 ✓</button>
+      </div>
+    </div>
+      </div><!-- /.split-right -->
+    </div><!-- /.split -->
+  </section>
+
+  <!-- ───── Stage 4: 재구체화 ───── -->
+  <section class="stage" data-stage="4">
+    <div class="card">
+      <h2 class="card-title">💬 4단계. 재구체화</h2>
+      <p class="card-sub">
+        내가 더 발전시키고 싶은 부분을 정한 뒤,<br>
+        Claude와 함께 그 지점만 깊이 파고들어봅시다. (최대 4~5턴)
+      </p>
+    </div>
+
+    <div class="split">
+      <div class="split-left">
+        <div class="ref-panel">
+          <h4 class="ref-panel-title">📚 참고</h4>
+          <div class="ref-section">
+            <div class="ref-section-label">🖼️ 2차 이미지</div>
+            <div class="ref-section-image empty" id="refImage4">(2단계에서 이미지를 생성하면 여기에 표시돼요)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-right">
+
+    <div class="card">
+      <div class="chat-header">
+        <button class="btn-reset-chat" id="btnResetChat" title="4단계 대화를 처음부터 다시 시작합니다">🔄 대화 다시 시작</button>
+      </div>
+      <div class="chat-container" id="chatContainer"></div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chatInput"
+          placeholder="Claude의 질문에 답을 적어봅시다..."></textarea>
+        <button class="btn-send" id="btnSend">보내기</button>
+      </div>
+      <div class="turn-indicator" id="turnIndicator">대화를 시작해봅시다</div>
+
+      <!-- 대화 정리 CTA (대화 2턴 이상 진행되면 눈에 띄는 자리에 표시) -->
+      <div class="summary-cta" id="summaryCta" style="display:none">
+        <button class="btn-summary-cta" id="btnSummary">
+          ✨ 지금까지 나눈 대화 정리해서 보기
+        </button>
+        <p class="summary-cta-hint">최종 프롬프트 다듬기 전에 훑어보면 좋아요</p>
+      </div>
+
+      <!-- 대화 정리 (summarize) -->
+      <div class="dialogue-summary" id="dialogueSummary" style="display:none">
+        <div class="ds-head">
+          <span class="ds-title">✨ 나눈 대화의 정리</span>
+          <button class="btn-ds-refresh" id="btnSummaryRefresh" title="다시 정리하기">🔄</button>
+        </div>
+        <div class="ds-content" id="dsContent"></div>
+      </div>
+
+      <div class="final-prompt-box">
+        <h4>✏️ 최종 프롬프트 다듬기</h4>
+        <p>대화에서 나온 관점들을 반영해 마지막 프롬프트를 직접 다듬어봅시다.<br>
+        대화에 담지 못했지만 <b>더 추가하고 싶은 내용</b>이 있다면 자유롭게 덧붙여도 좋아요.</p>
+
+        <div class="prev-prompt-ref">
+          <span class="prev-prompt-label">📝 이전(2차) 프롬프트 — 참고용</span>
+          <div class="prev-prompt-box empty" id="prevPromptRef">(2단계까지 작성하면 여기에 표시돼요)</div>
+          <button type="button" class="btn-use-prev" id="btnUsePrev" disabled>↓ 이 프롬프트에서 시작하기</button>
+        </div>
+
+        <textarea class="final-prompt-textarea" id="finalPrompt"
+          placeholder="위 프롬프트를 가져와 다듬거나, 새로 작성해봅시다..."></textarea>
+      </div>
+    </div>
+
+    <!-- 3차 이미지 생성 (오른쪽 컬럼 안에) -->
+    <div class="image-gen" id="imageGen3">
+      <h3>🖼️ 3차 이미지 생성 (최종)</h3>
+      <p class="image-gen-sub">
+        Claude와의 대화로 다듬은 최종 프롬프트입니다. 마지막 이미지를 만들어봅시다.
+      </p>
+      <div class="prompt-preview empty" id="prompt3">(위에서 최종 프롬프트를 작성하면 여기에 표시됩니다)</div>
+      <div class="btn-row">
+        <button class="btn-generate" id="genBtn3" disabled>🎨 이미지 생성하기</button>
+        <button class="btn-copy" id="copyBtn3" disabled>📋 프롬프트 복사</button>
+      </div>
+
+      <div class="image-preview" id="imgPreview3"></div>
+
+      <span class="external-toggle" data-toggle="3">🔧 외부 AI로 직접 만들기 ▾</span>
+      <div class="external-section" id="external3">
+        <div class="guide-links">
+          <a href="https://chat.openai.com/" target="_blank" rel="noopener">ChatGPT</a>
+          <a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini</a>
+          <a href="https://copilot.microsoft.com/" target="_blank" rel="noopener">Copilot</a>
+        </div>
+        <div class="image-upload">
+          <label class="upload-box" for="imgUpload3">
+            <span class="upload-ico">📁</span>
+            <span class="upload-txt">이미지 파일 업로드 (클릭)</span>
+            <input type="file" id="imgUpload3" accept="image/*">
+          </label>
+          <div class="or-divider">OR</div>
+          <input type="text" class="url-input" id="imgUrl3" placeholder="이미지 URL 붙여넣기">
+        </div>
+      </div>
+    </div>
+      </div><!-- /.split-right -->
+    </div><!-- /.split -->
+  </section>
+
+  <!-- ───── Stage 5: 여정 성찰 ───── -->
+  <section class="stage" data-stage="5">
+    <div class="card">
+      <h2 class="card-title">✨ 5단계. 여정 성찰</h2>
+      <p class="card-sub">
+        지금까지의 여정을 다섯 가지 관점에서 돌아봅시다.<br>
+        답변이 모이면 아래에서 전체 기록을 PDF로 저장할 수 있어요.
+      </p>
+      <div class="journey-gallery" id="journeyGallery">
+        (아직 생성된 이미지가 없습니다)
+      </div>
+    </div>
+
+    <!-- 카테고리 1: 프롬프트의 변화 -->
+    <div class="category-section">
+      <h3 class="cat-title">📝 프롬프트의 변화</h3>
+      <p class="cat-sub">내 사고 과정이 어떻게 확장되었는지 돌아봅시다.</p>
+
+      <div class="field">
+        <label class="field-label">처음 입력한 프롬프트</label>
+        <div class="field-auto empty" id="s5FirstPrompt">(자동으로 채워져요)</div>
+      </div>
+      <div class="field">
+        <label class="field-label">최종 프롬프트</label>
+        <div class="field-auto empty" id="s5FinalPrompt">(자동으로 채워져요)</div>
+      </div>
+      <div class="field">
+        <label class="field-label">둘은 어떤 점이 달라졌나요?</label>
+        <textarea class="reflection-input" data-s5="diff"
+          placeholder="늘어난 것, 구체화된 것, 바뀐 관점 등을 적어봅시다."></textarea>
+      </div>
+    </div>
+
+    <!-- 카테고리 2: 내가 남긴 것 (새 카테고리 — 소유·뿌리의 자각) -->
+    <div class="category-section">
+      <h3 class="cat-title">🫀 내가 남긴 것</h3>
+      <p class="cat-sub">이 수업에서 만든 건 이미지만이 아닙니다. 내가 쓴 프롬프트도 내 사고의 지도입니다.</p>
+
+      <div class="field">
+        <label class="field-label">위 최종 프롬프트를 다시 천천히 읽어봅시다. 이 문장에는 어떤 생각들이 담겨 있나요?</label>
+        <textarea class="reflection-input" data-s5="ownership"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">이미지는 AI가 만들었지만, 그 이미지를 만든 프롬프트는 내가 썼습니다. 그렇다면 이 작품에서 '내가 한 일'은 무엇일까요?</label>
+        <textarea class="reflection-input" data-s5="workRoot"
+          placeholder=""></textarea>
+      </div>
+    </div>
+
+    <!-- 카테고리 3: 작품 관점 -->
+    <div class="category-section">
+      <h3 class="cat-title">🎨 작품 관점</h3>
+      <p class="cat-sub">완성된 이미지를 하나의 작품으로 바라봅시다.</p>
+
+      <div class="field">
+        <label class="field-label">완성된 이미지에서 잘 표현되었다고 생각하는 부분은?</label>
+        <textarea class="reflection-input" data-s5="good"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">반대로 아쉽게 표현되었거나 부족하다고 느끼는 부분은?</label>
+        <textarea class="reflection-input" data-s5="lacking"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">직접 그린다면, 어떤 점을 더 강조하고 어떻게 수정하여 표현하고 싶은가?</label>
+        <textarea class="reflection-input" data-s5="redraw"
+          placeholder="다음 차시 활동의 설계도가 될 수 있어요."></textarea>
+      </div>
+    </div>
+
+    <!-- 카테고리 4: AI와 예술의 관계 -->
+    <div class="category-section">
+      <h3 class="cat-title">🤝 AI와 예술의 관계</h3>
+      <p class="cat-sub">이번 수업에서 경험한 것을 바탕으로, AI와 예술 사이의 경계를 직접 그어봅시다.</p>
+
+      <div class="field">
+        <label class="field-label">이번 수업에서 AI가 <b>잘 해준 것</b>은 무엇이었나요?</label>
+        <p class="field-hint">내가 쓴 것 중에서 AI가 받아서 이미지로 잘 옮긴 부분을 떠올려봅시다.</p>
+        <textarea class="reflection-input" data-s5="aiDid"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">반대로 AI가 <b>끝내 따라오지 못한 부분</b>은 어디였나요?</label>
+        <p class="field-hint">내가 썼는데 이미지에 스며들지 않은 것, 아예 담기지 못한 것.</p>
+        <textarea class="reflection-input" data-s5="aiMissed"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">그래서 AI는 예술가의 <b>어느 자리까지</b> 와줄 수 있다고 느껴졌나요? 반대로 <b>"여기서부터는 나의 영역이다"</b>라는 선은 어디에 그어졌나요?</label>
+        <textarea class="reflection-input" data-s5="aiLine"
+          placeholder=""></textarea>
+      </div>
+    </div>
+
+    <!-- 카테고리 5: 나에게 AI란 -->
+    <div class="category-section">
+      <h3 class="cat-title">🌟 나에게 AI란</h3>
+      <p class="cat-sub">이 여정의 마침표를 내 언어로 찍어봅시다.</p>
+
+      <div class="field">
+        <label class="field-label">수업을 <b>시작할 때와 지금</b>, AI에 대한 내 생각은 어떻게 달라졌나요?</label>
+        <textarea class="reflection-input" data-s5="aiChange"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">앞으로 내가 AI를 쓸 때, 이번 수업에서 <b>꼭 가져가고 싶은 태도</b> 하나는?</label>
+        <textarea class="reflection-input" data-s5="aiAttitude"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">AI 없이도 이 표현을 할 수 있는 사람이 되려면, <b>나에게 무엇이 더 필요할까요?</b></label>
+        <textarea class="reflection-input" data-s5="aiBeyond"
+          placeholder=""></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">한 문장으로: <b>나에게 AI란 ______ 이다.</b></label>
+        <p class="field-hint">비워진 자리에 내 언어로 마침표를 찍어봅시다. 한 줄이어도, 더 길게 이어붙여도 좋아요.</p>
+        <textarea class="reflection-input" data-s5="aiDefinition"
+          placeholder="나에게 AI란 ___ 이다. 왜냐하면 ___"></textarea>
+      </div>
+    </div>
+
+    <!-- 제출 패널 -->
+    <div class="submit-panel">
+      <h3>🎉 제출하기</h3>
+      <p>전체 여정(프롬프트·이미지·성찰 답변)을 PDF로 저장해 제출합니다.</p>
+      <button class="btn-pdf" id="btnPdf">📄 PDF로 저장하기</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- ───── Bottom nav ───── -->
+<div class="nav-bar">
+  <div class="nav-inner">
+    <button class="btn btn-ghost" id="btnPrev" style="visibility:hidden">← 이전</button>
+    <div class="nav-progress" id="navProgress">1 / 5 단계</div>
+    <button class="btn btn-primary" id="btnNext" disabled>다음 단계 →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PDF 생성용 숨김 컨테이너 -->
+<div id="pdfTarget" style="position:absolute;left:-10000px;top:0;width:800px;"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+ *  프롬프트 아틀리에 — 전체 로직
+ * ════════════════════════════════════════════════════════════════*/
+const STORAGE_KEY = 'promptAtelierState';
+const TOTAL_STAGES = 5;
+
+const state = {
+  current: 1,
+  stage1: { raw:'' },    // 학생이 평소 하던 방식대로 자유롭게 쓴 첫 프롬프트 (진단 기준점)
+  stage2: { forms:'', metaphor:'', personal:'', activeCard:1 },
+  stage3: { impression:'', good:'', gap:'', interpretation:'', activeCard:1 },
+  stage4: {
+    dialogue: [],   // [{role:'assistant'|'user', content:'...'}]
+    turn: 0,        // user가 말한 횟수
+    finalPrompt: '',
+    started: false,
+    summary: '',    // Claude가 만들어준 대화 정리 (markdown)
+  },
+  stage5: { diff:'', ownership:'', workRoot:'', good:'', lacking:'', redraw:'', aiDid:'', aiMissed:'', aiLine:'', aiChange:'', aiAttitude:'', aiBeyond:'', aiDefinition:'' },
+  images: { img1:'', img2:'', img3:'' },  // data url or http url
+  prompts: { p1:'', p2:'', p3:'' },       // 자동 조합된 프롬프트
+  breath: {                               // 단계 사이사이 "숨 고르기"
+    criteria: '',      // 호흡 0: 내 그림의 성공 기준 (1단계 뒤)
+    firstLook: '',     // 호흡 1: 1차 이미지 첫인상 (2단계 전)
+    surprise: '',      // 호흡 1: 기대/뜻밖 구분
+    stay: '',          // 호흡 2: 2차 이미지에서 오래 본 곳 (3단계 전)
+    review: '',        // 호흡 3: 최종 프롬프트 검토 (3차 이미지 전)
+  },
+};
+
+function $(id){ return document.getElementById(id); }
+
+// 저장은 debounce — 입력 중에 매번 localStorage에 쓰면 (특히 base64 이미지 포함 시) 타이핑이 버벅임.
+// 마지막 호출 후 400ms 쉬면 그때 한 번 기록. 페이지 떠나기 전 flushSave()로 강제 저장 가능.
+let _saveTimer = null;
+let _suppressSave = false;   // 초기화 중엔 save가 state를 되돌려 쓰지 못하게 막음
+function _writeNow(){
+  if(_suppressSave) return;
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ console.warn('save failed', e); }
+}
+function save(){
+  if(_suppressSave) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(_writeNow, 400);
+}
+function flushSave(){
+  clearTimeout(_saveTimer);
+  _writeNow();
+}
+window.addEventListener('beforeunload', flushSave);
+window.addEventListener('pagehide', flushSave);
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const loaded = JSON.parse(raw);
+    Object.assign(state, loaded);
+    ['stage1','stage2','stage3','stage4','stage5','images','prompts','breath'].forEach(k=>{
+      if(loaded[k]) Object.assign(state[k], loaded[k]);
+    });
+    // 마이그레이션: stage2 옛 필드(emotion/moment/visual) → 신 필드(forms/metaphor/personal) best-fit
+    if(state.stage2){
+      const s2 = state.stage2;
+      if(!s2.forms && s2.visual) s2.forms = s2.visual;      // 시각 요소 → 조형 언어
+      if(!s2.personal){
+        const inner = [s2.emotion, s2.moment].filter(Boolean).join('\n\n');
+        if(inner) s2.personal = inner;                       // 감정+순간 → 나만 아는 것
+      }
+      delete s2.emotion; delete s2.moment; delete s2.visual;
+    }
+    // 마이그레이션: stage5 옛 필드(aiRole/aiArt/myAI) → 신 필드 best-fit
+    if(state.stage5){
+      const s5 = state.stage5;
+      if(!s5.aiDid && s5.aiRole) s5.aiDid = s5.aiRole;               // 역할 → 잘 해준 것
+      if(!s5.aiLine && s5.aiArt) s5.aiLine = s5.aiArt;               // 관계 → 자리/경계
+      if(!s5.aiDefinition && s5.myAI) s5.aiDefinition = s5.myAI;     // 나에게 AI란 → 한 문장 정의
+      delete s5.aiRole; delete s5.aiArt; delete s5.myAI;
+    }
+    // 마이그레이션: 옛 구조(what/why/extra 또는 mode/free)를 단일 raw 필드로 병합
+    if(state.stage1){
+      if(!state.stage1.raw){
+        const what = (state.stage1.what||'').trim();
+        const why = (state.stage1.why||'').trim();
+        const extra = (state.stage1.extra||'').trim();
+        const oldFree = (state.stage1.free||'').trim();
+        const parts = [];
+        if(what || why){
+          const sentence = (what && why)
+            ? `나는 "${what}"을(를) 표현하고 싶습니다. 왜냐하면 "${why}" 때문입니다.`
+            : (what || why);
+          parts.push(sentence);
+        }
+        if(extra) parts.push(extra);
+        if(!parts.length && oldFree) parts.push(oldFree);
+        if(parts.length) state.stage1.raw = parts.join('\n\n');
+      }
+      delete state.stage1.what;
+      delete state.stage1.why;
+      delete state.stage1.extra;
+      delete state.stage1.mode;
+      delete state.stage1.free;
+    }
+  }catch(e){ console.warn('load failed', e); }
+}
+
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+/* ── Auto-grow textareas — 학생이 원하는 만큼 쓸 수 있도록 입력 칸이 내용 따라 자연스레 늘어남 ── */
+function autogrow(ta){
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+function attachAutogrow(ta){
+  if(!ta || ta._autogrowAttached) return;
+  ta._autogrowAttached = true;
+  ta.addEventListener('input', ()=>autogrow(ta));
+  // 초기 사이즈 (저장된 값 복원된 후)
+  requestAnimationFrame(()=>autogrow(ta));
+}
+function attachAutogrowToAll(){
+  document.querySelectorAll('textarea').forEach(attachAutogrow);
+}
+// 창 리사이즈 시 textarea 재계산 (폭 바뀌면 줄바꿈 달라지므로)
+window.addEventListener('resize', ()=>{
+  document.querySelectorAll('textarea').forEach(ta=>{
+    if(ta._autogrowAttached) autogrow(ta);
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stepper & stage navigation
+ * ════════════════════════════════════════════════════════════════*/
+function renderStepper(){
+  document.querySelectorAll('.step').forEach(el=>{
+    const n = +el.dataset.step;
+    el.classList.toggle('active', n===state.current);
+    el.classList.toggle('done', n<state.current);
+  });
+  $('navProgress').textContent = `${state.current} / ${TOTAL_STAGES} 단계`;
+}
+
+function showStage(n){
+  state.current = Math.max(1, Math.min(TOTAL_STAGES, n));
+  document.querySelectorAll('.stage').forEach(el=>{
+    el.classList.toggle('active', +el.dataset.stage===state.current);
+  });
+  $('btnPrev').style.visibility = state.current===1 ? 'hidden' : 'visible';
+  $('btnNext').textContent = state.current===TOTAL_STAGES ? '🎉 완료!' : '다음 단계 →';
+  renderStepper();
+  refreshNextBtn();
+
+  // 각 단계 진입 시 이전 이미지 참고 패널 갱신
+  if(state.current===2) renderStage2Reference();
+  if(state.current===3) renderStage3Reference();
+  if(state.current===4){ renderStage4Reference(); initStage4Chat(); }
+  if(state.current===5){ renderJourneyGallery(); renderStage5AutoFields(); }
+
+  save();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+$('btnReset').addEventListener('click', ()=>{
+  if(confirm('진행 중인 모든 내용(프롬프트·이미지·성찰 답변 등)이 사라집니다.\n처음부터 다시 시작하시겠습니까?')){
+    _suppressSave = true;                     // 새로고침 직전 beforeunload가 state를 되살리지 못하게
+    clearTimeout(_saveTimer);
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+});
+
+$('btnPrev').addEventListener('click', ()=> showStage(state.current - 1));
+$('btnNext').addEventListener('click', ()=>{
+  if($('btnNext').disabled) return;
+  if(state.current < TOTAL_STAGES) showStage(state.current + 1);
+  else toast('🎉 여정을 완성했습니다!');
+});
+
+/* ════════════════════════════════════════════════════════════════
+ *  Prompt composition
+ * ════════════════════════════════════════════════════════════════*/
+function composePrompt1(){
+  return (state.stage1.raw || '').trim();
+}
+
+function composePrompt2(){
+  const p1 = composePrompt1();
+  const s2 = state.stage2;
+  if(!p1) return '';
+  const forms = (s2.forms||'').trim();
+  const metaphor = (s2.metaphor||'').trim();
+  const personal = (s2.personal||'').trim();
+  if(!forms && !metaphor && !personal) return p1;
+
+  const parts = [p1];
+  if(forms) parts.push(`\n[조형 언어]\n${forms}`);
+
+  const innerParts = [];
+  if(metaphor) innerParts.push(`- 은유적 이미지: ${metaphor}`);
+  if(personal) innerParts.push(`- 작가만의 구체적 감각: ${personal}`);
+  if(innerParts.length){
+    parts.push(
+`\n[작가의 내적 관점 — 다음 내용을 그림의 주제나 소재로 직접 그리지 말고,
+전체 분위기·질감·여운에 은은히 녹여내 주세요. 이건 그림의 시각적 요소가 아니라,
+주제에 대한 학생의 고유한 관점입니다]
+${innerParts.join('\n')}`
+    );
+  }
+  return parts.join('');
+}
+
+function composePrompt3(){
+  return state.stage4.finalPrompt.trim();
+}
+
+function renderPrompts(){
+  const p1 = composePrompt1();
+  const p2 = composePrompt2();
+  const p3 = composePrompt3();
+  state.prompts.p1 = p1;
+  state.prompts.p2 = p2;
+  state.prompts.p3 = p3;
+
+  const setPrompt = (id, txt, copyBtnId, genBtnId)=>{
+    const el = $(id);
+    const copyBtn = $(copyBtnId);
+    const genBtn = $(genBtnId);
+    if(txt){
+      el.textContent = txt;
+      el.classList.remove('empty');
+      copyBtn.disabled = false;
+      if(genBtn) genBtn.disabled = false;
+    } else {
+      if(id==='prompt1') el.textContent = '(1단계를 먼저 작성하면 프롬프트가 여기에 표시됩니다)';
+      else if(id==='prompt2') el.textContent = '(2단계 세 카드를 모두 완성하면 프롬프트가 여기에 표시됩니다)';
+      else el.textContent = '(위에서 최종 프롬프트를 작성하면 여기에 표시됩니다)';
+      el.classList.add('empty');
+      copyBtn.disabled = true;
+      if(genBtn) genBtn.disabled = true;
+    }
+  };
+  setPrompt('prompt1', p1, 'copyBtn1', 'genBtn1');
+  setPrompt('prompt2', p2, 'copyBtn2', 'genBtn2');
+  setPrompt('prompt3', p3, 'copyBtn3', 'genBtn3');
+}
+
+/* ── 이미지 생성 (DALL·E 3, Worker 경유) ── */
+async function generateImage(n){
+  const prompt = state.prompts[`p${n}`];
+  if(!prompt){ toast('먼저 프롬프트가 만들어져야 합니다'); return; }
+
+  const btn = $(`genBtn${n}`);
+  const origTxt = btn.textContent;
+  btn.disabled = true;
+
+  // 2차는 1차 이미지를, 3차는 2차 이미지를 참고
+  let referenceImage = null;
+  if(n === 2) referenceImage = state.images.img1 || null;
+  if(n === 3) referenceImage = state.images.img2 || null;
+
+  btn.textContent = referenceImage
+    ? '🎨 이전 이미지 참고해서 생성 중... (30~50초)'
+    : '🎨 생성 중... (20~40초)';
+
+  try{
+    const res = await fetch(WORKER_URL + '/api/image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, referenceImage }),
+    });
+    if(!res.ok){
+      let err;
+      try { err = await res.json(); } catch { err = { error: `HTTP ${res.status}` }; }
+      throw new Error(err.detail?.error?.message || err.error || '이미지 생성 실패');
+    }
+    const data = await res.json();
+    if(!data.image) throw new Error('이미지 데이터가 비어있어요');
+    state.images[`img${n}`] = data.image;
+    save();
+    renderImagePreview(n);
+    toast('🎉 이미지가 생성되었습니다');
+  }catch(err){
+    console.error(err);
+    toast('생성 실패: ' + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = origTxt;
+  }
+}
+
+['1','2','3'].forEach(n=>{
+  $(`genBtn${n}`).addEventListener('click', ()=> generateImage(n));
+});
+
+// external 섹션 토글
+document.querySelectorAll('[data-toggle]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    const n = el.dataset.toggle;
+    const sec = $(`external${n}`);
+    sec.classList.toggle('open');
+    el.textContent = sec.classList.contains('open')
+      ? '🔧 외부 AI로 직접 만들기 ▴'
+      : '🔧 외부 AI로 직접 만들기 ▾';
+  });
+});
+
+/* Copy button handlers */
+['1','2','3'].forEach(n=>{
+  $(`copyBtn${n}`).addEventListener('click', ()=>{
+    const txt = state.prompts[`p${n}`];
+    if(!txt) return;
+    navigator.clipboard.writeText(txt).then(()=>{
+      const btn = $(`copyBtn${n}`);
+      btn.classList.add('copied');
+      btn.textContent = '✓ 복사됨';
+      setTimeout(()=>{
+        btn.classList.remove('copied');
+        btn.textContent = '📋 프롬프트 복사';
+      }, 1800);
+    }).catch(()=>toast('복사에 실패했어요'));
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════
+ *  Image upload / URL
+ * ════════════════════════════════════════════════════════════════*/
+function renderImagePreview(n){
+  const key = `img${n}`;
+  const url = state.images[key];
+  const el = $(`imgPreview${n}`);
+  if(!url){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <img src="${url}" alt="생성 이미지" onerror="this.parentNode.innerHTML='<div style=color:var(--sub)>이미지를 불러올 수 없습니다</div>'">
+    <button class="remove-btn" data-remove="${n}">이미지 지우기</button>
+  `;
+  el.querySelector('.remove-btn').addEventListener('click', ()=>{
+    state.images[key]='';
+    save();
+    renderImagePreview(n);
+    $(`imgUrl${n}`).value = '';
+    $(`imgUpload${n}`).value = '';
+  });
+}
+
+['1','2','3'].forEach(n=>{
+  // file upload
+  $(`imgUpload${n}`).addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      state.images[`img${n}`] = ev.target.result;
+      save();
+      renderImagePreview(n);
+      $(`imgUrl${n}`).value='';
+      toast('이미지가 업로드되었습니다');
+    };
+    reader.readAsDataURL(file);
+  });
+  // URL input
+  $(`imgUrl${n}`).addEventListener('change', (e)=>{
+    const url = e.target.value.trim();
+    if(!url) return;
+    state.images[`img${n}`] = url;
+    save();
+    renderImagePreview(n);
+    toast('이미지 URL이 등록되었습니다');
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stage 1
+ * ════════════════════════════════════════════════════════════════*/
+$('intentRaw').addEventListener('input', (e)=>{
+  state.stage1.raw = e.target.value;
+  save(); refreshNextBtn(); renderPrompts();
+});
+
+function isStage1Valid(){
+  return (state.stage1.raw||'').trim().length >= 3;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stage 2
+ * ════════════════════════════════════════════════════════════════*/
+const S2_FIELDS = ['forms','metaphor','personal'];
+const S2_MIN = 10;
+
+function s2Field(n){ return S2_FIELDS[n-1]; }
+function s2Value(n){ return (state.stage2[s2Field(n)] || '').trim(); }
+function isCardComplete(n){ return s2Value(n).length >= S2_MIN; }
+function canActivateCard(n){
+  for(let i=1; i<n; i++){ if(!isCardComplete(i)) return false; }
+  return true;
+}
+
+function renderStage2(){
+  for(let n=1; n<=3; n++){
+    const el = document.querySelector(`.step-card[data-sc="${n}"]`);
+    if(!el) continue;
+    el.classList.remove('active','completed','locked');
+    const isActive = (n === state.stage2.activeCard);
+    const canActivate = canActivateCard(n);
+    const done = isCardComplete(n);
+    if(!canActivate){
+      el.classList.add('locked');
+    } else if(isActive){
+      el.classList.add('active');
+      const ta = el.querySelector('.sc-input');
+      if(ta){ ta.value = state.stage2[s2Field(n)] || ''; autogrow(ta); }
+      updateS2Counter(n);
+    } else if(done){
+      el.classList.add('completed');
+      const sm = el.querySelector('.sc-summary');
+      if(sm) sm.textContent = state.stage2[s2Field(n)] || '';
+    } else {
+      el.classList.add('locked');
+    }
+    const status = el.querySelector('.sc-status');
+    if(status){
+      if(isActive) status.textContent = '진행 중';
+      else if(done) status.textContent = '✓ 완료';
+      else status.textContent = canActivate ? '대기 중' : '잠김';
+    }
+  }
+  refreshNextBtn();
+}
+
+function updateS2Counter(n){
+  const len = s2Value(n).length;
+  const counter = document.querySelector(`[data-counter="${s2Field(n)}"]`);
+  if(!counter) return;
+  counter.textContent = `${len}자 / ${S2_MIN}자 이상`;
+  counter.classList.toggle('ok', len >= S2_MIN);
+  const btn = document.querySelector(`[data-next="${n}"]`);
+  if(btn) btn.disabled = len < S2_MIN;
+}
+
+document.querySelectorAll('.step-card[data-sc] .sc-input').forEach(ta=>{
+  ta.addEventListener('input', ()=>{
+    const card = ta.closest('.step-card');
+    const n = +card.dataset.sc;
+    state.stage2[s2Field(n)] = ta.value;
+    save(); updateS2Counter(n); refreshNextBtn(); renderPrompts();
+  });
+});
+
+document.querySelectorAll('[data-next]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const n = +btn.dataset.next;
+    if(!isCardComplete(n)) return;
+    if(n < 3){
+      state.stage2.activeCard = n + 1;
+      save(); renderStage2();
+      const nextEl = document.querySelector(`.step-card[data-sc="${n+1}"]`);
+      setTimeout(()=>nextEl?.scrollIntoView({behavior:'smooth',block:'center'}), 80);
+    } else {
+      // 마지막(3번) 카드 완료 → 모든 카드 completed 상태로, 이미지 섹션으로 스크롤
+      state.stage2.activeCard = 0;
+      save(); renderStage2();
+      toast('🌸 조형 번역 완료! 2차 이미지를 만들어봅니다');
+      setTimeout(()=>$('imageGen2')?.scrollIntoView({behavior:'smooth',block:'start'}), 150);
+    }
+  });
+});
+
+document.querySelectorAll('[data-edit]').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const n = +btn.dataset.edit;
+    state.stage2.activeCard = n;
+    save(); renderStage2();
+  });
+});
+
+document.querySelectorAll('.step-card[data-sc] .sc-header').forEach(hdr=>{
+  hdr.addEventListener('click', ()=>{
+    const card = hdr.closest('.step-card');
+    const n = +card.dataset.sc;
+    if(!canActivateCard(n)) return;
+    if(n === state.stage2.activeCard) return;
+    state.stage2.activeCard = n;
+    save(); renderStage2();
+  });
+});
+
+function isStage2Valid(){ return [1,2,3].every(isCardComplete); }
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stage 3 (성찰 4질문)
+ * ════════════════════════════════════════════════════════════════*/
+const S3_FIELDS = ['impression','good','gap','interpretation'];
+const S3_MIN = 10;
+function s3Field(n){ return S3_FIELDS[n-1]; }
+function s3Value(n){ return (state.stage3[s3Field(n)] || '').trim(); }
+function isS3CardComplete(n){ return s3Value(n).length >= S3_MIN; }
+function canActivateS3Card(n){
+  for(let i=1; i<n; i++){ if(!isS3CardComplete(i)) return false; }
+  return true;
+}
+
+function renderStage3(){
+  for(let n=1; n<=4; n++){
+    const el = document.querySelector(`.step-card[data-sc3="${n}"]`);
+    if(!el) continue;
+    el.classList.remove('active','completed','locked');
+    const isActive = (n === state.stage3.activeCard);
+    const canActivate = canActivateS3Card(n);
+    const done = isS3CardComplete(n);
+    if(!canActivate){
+      el.classList.add('locked');
+    } else if(isActive){
+      el.classList.add('active');
+      const ta = el.querySelector('.sc-input');
+      if(ta){ ta.value = state.stage3[s3Field(n)] || ''; autogrow(ta); }
+      updateS3Counter(n);
+    } else if(done){
+      el.classList.add('completed');
+      const sm = el.querySelector('.sc-summary');
+      if(sm) sm.textContent = state.stage3[s3Field(n)] || '';
+    } else {
+      el.classList.add('locked');
+    }
+    const status = el.querySelector('.sc-status');
+    if(status){
+      if(isActive) status.textContent = '진행 중';
+      else if(done) status.textContent = '✓ 완료';
+      else status.textContent = canActivate ? '대기 중' : '잠김';
+    }
+  }
+  refreshNextBtn();
+}
+
+function updateS3Counter(n){
+  const len = s3Value(n).length;
+  const counter = document.querySelector(`[data-counter-s3="${s3Field(n)}"]`);
+  if(!counter) return;
+  counter.textContent = `${len}자 / ${S3_MIN}자 이상`;
+  counter.classList.toggle('ok', len >= S3_MIN);
+  const btn = document.querySelector(`[data-next-s3="${n}"]`);
+  if(btn) btn.disabled = len < S3_MIN;
+}
+
+document.querySelectorAll('.step-card[data-sc3] .sc-input').forEach(ta=>{
+  ta.addEventListener('input', ()=>{
+    const card = ta.closest('.step-card');
+    const n = +card.dataset.sc3;
+    state.stage3[s3Field(n)] = ta.value;
+    save(); updateS3Counter(n); refreshNextBtn();
+  });
+});
+
+document.querySelectorAll('[data-next-s3]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const n = +btn.dataset.nextS3;
+    if(!isS3CardComplete(n)) return;
+    if(n < 4){
+      state.stage3.activeCard = n + 1;
+      save(); renderStage3();
+      const nextEl = document.querySelector(`.step-card[data-sc3="${n+1}"]`);
+      setTimeout(()=>nextEl?.scrollIntoView({behavior:'smooth',block:'center'}), 80);
+    } else {
+      // 마지막(4번) 카드 완료 → 모든 카드 completed 상태로
+      state.stage3.activeCard = 0;
+      save(); renderStage3();
+      toast('🔍 성찰 완료! 다음 단계로 넘어가볼까요?');
+    }
+  });
+});
+
+document.querySelectorAll('[data-edit-s3]').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const n = +btn.dataset.editS3;
+    state.stage3.activeCard = n;
+    save(); renderStage3();
+  });
+});
+
+document.querySelectorAll('.step-card[data-sc3] .sc-header').forEach(hdr=>{
+  hdr.addEventListener('click', ()=>{
+    const card = hdr.closest('.step-card');
+    const n = +card.dataset.sc3;
+    if(!canActivateS3Card(n)) return;
+    if(n === state.stage3.activeCard) return;
+    state.stage3.activeCard = n;
+    save(); renderStage3();
+  });
+});
+
+// 공통 헬퍼: 참고 패널의 이미지 섹션 채우기
+function renderRefImage(elId, imgKey, altText, emptyMsg){
+  const el = $(elId);
+  if(!el) return;
+  const url = state.images[imgKey];
+  if(url){
+    el.classList.remove('empty');
+    el.innerHTML = `<img src="${url}" alt="${altText}">`;
+  } else {
+    el.classList.add('empty');
+    el.textContent = emptyMsg;
+  }
+}
+function renderStage2Reference(){
+  // 1단계에 쓴 내용
+  const textEl = $('prevWritingContent2');
+  if(textEl){
+    const raw = (state.stage1.raw||'').trim();
+    if(raw){
+      textEl.textContent = raw;
+      textEl.classList.remove('empty');
+    } else {
+      textEl.textContent = '(1단계를 작성하면 여기에 표시돼요)';
+      textEl.classList.add('empty');
+    }
+  }
+  // 1차 이미지
+  renderRefImage('refImage2', 'img1', '1차 이미지',
+    '(1단계에서 이미지를 생성하면 여기에 표시돼요)');
+}
+function renderStage3Reference(){
+  renderRefImage('refImage3', 'img2', '2차 이미지',
+    '(2단계에서 이미지를 생성하면 여기에 표시돼요)');
+}
+function renderStage4Reference(){
+  renderRefImage('refImage4', 'img2', '2차 이미지',
+    '(2단계에서 이미지를 생성하면 여기에 표시돼요)');
+}
+function renderJourneyGallery(){
+  const el = $('journeyGallery');
+  if(!el) return;
+  const imgs = [
+    { key:'img1', label:'1차 — 나의 출발점' },
+    { key:'img2', label:'2차 — 조형 번역' },
+    { key:'img3', label:'3차 — 최종' },
+  ];
+  const hasAny = imgs.some(i => state.images[i.key]);
+  if(!hasAny){
+    el.innerHTML = '(아직 생성된 이미지가 없습니다)';
+    return;
+  }
+  el.innerHTML = imgs.map(i => {
+    const url = state.images[i.key];
+    return url
+      ? `<div class="jg-item"><img src="${url}" alt="${i.label}"><div class="jg-label">${i.label}</div></div>`
+      : `<div class="jg-item"><div class="jg-placeholder">아직 생성 전</div><div class="jg-label">${i.label}</div></div>`;
+  }).join('');
+}
+function isStage3Valid(){
+  return [1,2,3,4].every(isS3CardComplete);
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stage 4 — Claude 대화 (Mock)
+ * ════════════════════════════════════════════════════════════════*/
+const MAX_TURNS = 7;         // 하드 상한 (그 이상은 차단)
+const SOFT_TURNS = 5;        // 이 턴까지는 기본, 넘어가면 '추가 대화'
+const WORKER_URL = 'https://prompt-atelier-proxy.vercel.app';
+
+// 학생 맥락을 API로 보낼 형태로 조립
+function buildClaudeContext(){
+  const s1 = state.stage1;
+  const intent = (s1.raw||'').trim();
+  return {
+    intent,
+    forms: state.stage2.forms || '',
+    metaphor: state.stage2.metaphor || '',
+    personal: state.stage2.personal || '',
+    impression: state.stage3.impression,
+    good: state.stage3.good,
+    gap: state.stage3.gap,
+    interpretation: state.stage3.interpretation,
+  };
+}
+
+// Cloudflare Worker 경유로 Claude API 호출
+async function callClaude(){
+  const context = buildClaudeContext();
+  // dialogue에서 _hidden 제거한 형태로 전송
+  const dialogue = state.stage4.dialogue.map(m => ({
+    role: m.role, content: m.content
+  }));
+
+  const res = await fetch(WORKER_URL + '/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ context, dialogue }),
+  });
+
+  if(!res.ok){
+    let err;
+    try { err = await res.json(); } catch { err = { error: '응답 파싱 실패' }; }
+    throw new Error(err.detail?.error?.message || err.error || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.reply || '(응답이 비었어요)';
+}
+
+// 타이핑 인디케이터
+let _typingEl = null;
+function showTyping(){
+  hideTyping();
+  _typingEl = document.createElement('div');
+  _typingEl.className = 'chat-msg assistant typing';
+  _typingEl.textContent = '생각 중...';
+  $('chatContainer').appendChild(_typingEl);
+  $('chatContainer').scrollTop = $('chatContainer').scrollHeight;
+}
+function hideTyping(){
+  if(_typingEl){ _typingEl.remove(); _typingEl = null; }
+}
+
+function appendChatMessage(role, content){
+  const container = $('chatContainer');
+  const el = document.createElement('div');
+  el.className = `chat-msg ${role}`;
+  el.textContent = content;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderChatFromState(){
+  const container = $('chatContainer');
+  container.innerHTML = '';
+  state.stage4.dialogue.forEach(m=>{
+    if(m._hidden) return;
+    appendChatMessage(m.role, m.content);
+  });
+  updateTurnIndicator();
+}
+
+function updateTurnIndicator(){
+  const t = state.stage4.turn;
+  const el = $('turnIndicator');
+  if(t===0 && state.stage4.dialogue.length===0) el.textContent = '대화를 시작해봅시다';
+  else if(t >= MAX_TURNS) el.textContent = `✓ 대화 완료 (${t}턴)`;
+  else if(t >= SOFT_TURNS) el.textContent = `${t}턴 — 원하면 ${MAX_TURNS-t}번 더 대화할 수 있습니다`;
+  else el.textContent = `${t}/${SOFT_TURNS}턴 진행 중`;
+  refreshSummaryBtn();
+}
+
+function renderPrevPromptRef(){
+  const p2 = state.prompts.p2 || composePrompt2();
+  const box = $('prevPromptRef');
+  const btn = $('btnUsePrev');
+  if(p2){
+    box.textContent = p2;
+    box.classList.remove('empty');
+    btn.disabled = false;
+  } else {
+    box.textContent = '(2단계까지 작성하면 여기에 표시돼요)';
+    box.classList.add('empty');
+    btn.disabled = true;
+  }
+}
+
+$('btnResetChat').addEventListener('click', ()=>{
+  if(!confirm('4단계 대화를 처음부터 다시 시작하시겠습니까?\n(1~3단계 답변과 최종 프롬프트 내용은 유지됩니다)')) return;
+  state.stage4.dialogue = [];
+  state.stage4.turn = 0;
+  state.stage4.started = false;
+  state.stage4.summary = '';
+  save();
+  $('chatContainer').innerHTML = '';
+  $('dialogueSummary').style.display = 'none';
+  refreshSummaryBtn();
+  initStage4Chat();
+  toast('대화를 다시 시작했습니다');
+});
+
+/* ────────── 대화 정리 (summarize) ────────── */
+// 미니 마크다운 렌더 (## 헤딩, **굵기**, - 불릿만 지원)
+function renderMiniMarkdown(md){
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let text = esc(md)
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  const lines = text.split('\n');
+  const out = [];
+  let inList = false;
+  for(const raw of lines){
+    const line = raw.trimEnd();
+    if(/^##\s+/.test(line)){
+      if(inList){ out.push('</ul>'); inList = false; }
+      out.push(`<h3 class="ds-h3">${line.replace(/^##\s+/, '')}</h3>`);
+    } else if(/^#\s+/.test(line)){
+      if(inList){ out.push('</ul>'); inList = false; }
+      out.push(`<h3 class="ds-h3">${line.replace(/^#\s+/, '')}</h3>`);
+    } else if(/^[-•]\s+/.test(line)){
+      if(!inList){ out.push('<ul class="ds-list">'); inList = true; }
+      out.push(`<li>${line.replace(/^[-•]\s+/, '')}</li>`);
+    } else if(line === ''){
+      if(inList){ out.push('</ul>'); inList = false; }
+    } else {
+      if(inList){ out.push('</ul>'); inList = false; }
+      out.push(`<p class="ds-p">${line}</p>`);
+    }
+  }
+  if(inList) out.push('</ul>');
+  return out.join('\n');
+}
+
+function refreshSummaryBtn(){
+  // 2턴 이상 + 아직 정리본 안 만들었을 때만 CTA 노출
+  const cta = $('summaryCta');
+  const btn = $('btnSummary');
+  if(!cta || !btn) return;
+  const hasEnoughTurns = state.stage4.turn >= 2;
+  const hasSummary = !!(state.stage4.summary && state.stage4.summary.trim());
+  cta.style.display = (hasEnoughTurns && !hasSummary) ? 'block' : 'none';
+  btn.disabled = !hasEnoughTurns;
+}
+
+async function generateSummary(){
+  const btn = $('btnSummary');
+  const panel = $('dialogueSummary');
+  const content = $('dsContent');
+  btn.disabled = true;
+  panel.style.display = 'block';
+  content.innerHTML = '<div class="ds-loading">정리 중... (10~15초)</div>';
+  try{
+    const context = buildClaudeContext();
+    const dialogue = state.stage4.dialogue
+      .filter(m => !m._hidden)
+      .map(m => ({ role:m.role, content:m.content }));
+    const res = await fetch(WORKER_URL + '/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context, dialogue, mode: 'summarize' }),
+    });
+    if(!res.ok){
+      let err; try{ err = await res.json(); } catch{ err = { error: `HTTP ${res.status}` }; }
+      throw new Error(err.detail?.error?.message || err.error || 'summarize 실패');
+    }
+    const data = await res.json();
+    const summary = data.reply || '';
+    state.stage4.summary = summary;
+    save();
+    content.innerHTML = renderMiniMarkdown(summary);
+    refreshSummaryBtn();   // 정리본 생기면 CTA 숨김
+  }catch(err){
+    console.error(err);
+    content.innerHTML = `<div class="ds-loading" style="color:#C66">정리 실패 — ${err.message || '알 수 없는 오류'}</div>`;
+    toast('대화 정리에 실패했습니다. 잠시 후 다시 시도합니다.');
+  }finally{
+    btn.disabled = state.stage4.turn < 2;
+  }
+}
+
+$('btnSummary').addEventListener('click', generateSummary);
+$('btnSummaryRefresh').addEventListener('click', generateSummary);
+
+$('btnUsePrev').addEventListener('click', ()=>{
+  const p2 = state.prompts.p2 || composePrompt2();
+  if(!p2) return;
+  const current = $('finalPrompt').value.trim();
+  if(current && !confirm('지금 작성 중인 내용이 사라져요. 이전 프롬프트로 덮어쓸까요?')) return;
+  $('finalPrompt').value = p2;
+  autogrow($('finalPrompt'));
+  state.stage4.finalPrompt = p2;
+  save();
+  renderPrompts();
+  refreshNextBtn();
+  toast('이전 프롬프트를 가져왔습니다');
+});
+
+async function initStage4Chat(){
+  $('finalPrompt').value = state.stage4.finalPrompt || '';
+  renderPrevPromptRef();
+
+  if(state.stage4.started){
+    renderChatFromState();
+    return;
+  }
+
+  // 초기 user 메시지 (UI에 숨김) — Claude API 스펙상 첫 메시지는 user여야 함
+  state.stage4.dialogue = [{
+    role: 'user',
+    content: '안녕하세요. 지금까지 적어온 맥락을 잠깐 읽어보시고, 학생이 어느 방향을 더 발전시키고 싶은지 먼저 물어봐주세요.',
+    _hidden: true,
+  }];
+  save();
+  renderChatFromState();
+
+  showTyping();
+  try{
+    const reply = await callClaude();
+    state.stage4.dialogue.push({ role:'assistant', content: reply });
+    state.stage4.started = true;
+    save();
+    hideTyping();
+    appendChatMessage('assistant', reply);
+    updateTurnIndicator();
+  }catch(err){
+    hideTyping();
+    console.error(err);
+    toast('대화 시작에 실패했습니다. 잠시 후 다시 시도합니다.');
+    // 실패 시 상태 복구
+    state.stage4.dialogue = [];
+    save();
+  }
+}
+
+$('btnSend').addEventListener('click', sendStage4Message);
+$('chatInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){
+    e.preventDefault(); sendStage4Message();
+  }
+});
+
+async function sendStage4Message(){
+  const input = $('chatInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  if(state.stage4.turn >= MAX_TURNS){
+    toast('대화가 이미 완료되었습니다. 최종 프롬프트를 다듬습니다.');
+    return;
+  }
+
+  state.stage4.dialogue.push({role:'user', content: msg});
+  state.stage4.turn += 1;
+  input.value = '';
+  autogrow(input);
+  save();
+  appendChatMessage('user', msg);
+  updateTurnIndicator();
+
+  showTyping();
+  $('btnSend').disabled = true;
+
+  try{
+    const reply = await callClaude();
+    state.stage4.dialogue.push({role:'assistant', content: reply});
+    save();
+    hideTyping();
+    appendChatMessage('assistant', reply);
+    updateTurnIndicator();
+    refreshNextBtn();
+  }catch(err){
+    hideTyping();
+    console.error(err);
+    toast('답변을 받지 못했어요: ' + err.message);
+    // 사용자 메시지 롤백
+    state.stage4.dialogue.pop();
+    state.stage4.turn -= 1;
+    save();
+    renderChatFromState();
+  }finally{
+    $('btnSend').disabled = false;
+  }
+}
+
+$('finalPrompt').addEventListener('input', (e)=>{
+  state.stage4.finalPrompt = e.target.value;
+  save(); renderPrompts(); refreshNextBtn();
+});
+
+function isStage4Valid(){
+  return state.stage4.turn >= 2 && state.stage4.finalPrompt.trim().length >= 10;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  Stage 5
+ * ════════════════════════════════════════════════════════════════*/
+function renderStage5AutoFields(){
+  const p1 = state.prompts.p1 || composePrompt1();
+  const p3 = state.prompts.p3 || composePrompt3();
+  const first = $('s5FirstPrompt');
+  const finalP = $('s5FinalPrompt');
+  if(p1){ first.textContent = p1; first.classList.remove('empty'); }
+  else { first.textContent = '(1단계를 작성하면 여기에 표시돼요)'; first.classList.add('empty'); }
+  if(p3){ finalP.textContent = p3; finalP.classList.remove('empty'); }
+  else { finalP.textContent = '(4단계에서 최종 프롬프트를 작성하면 여기에 표시돼요)'; finalP.classList.add('empty'); }
+}
+
+document.querySelectorAll('[data-s5]').forEach(ta=>{
+  ta.addEventListener('input', ()=>{
+    state.stage5[ta.dataset.s5] = ta.value;
+    save(); refreshNextBtn();
+  });
+});
+
+/* ────────── 호흡 (숨 고르기) 입력 공통 바인딩 ────────── */
+document.querySelectorAll('[data-breath]').forEach(ta=>{
+  ta.addEventListener('input', ()=>{
+    state.breath[ta.dataset.breath] = ta.value;
+    save();
+  });
+});
+
+function isStage5Valid(){
+  const s = state.stage5;
+  return ['diff','ownership','workRoot','good','lacking','redraw','aiDid','aiMissed','aiLine','aiChange','aiAttitude','aiBeyond','aiDefinition']
+    .every(k => (s[k]||'').trim().length >= 5);
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  PDF export
+ * ════════════════════════════════════════════════════════════════*/
+$('btnPdf').addEventListener('click', exportPDF);
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function buildPDFContent(){
+  const s1 = state.stage1;
+  const s2 = state.stage2;
+  const s3 = state.stage3;
+  const s4 = state.stage4;
+  const s5 = state.stage5;
+  const img = state.images;
+  const today = new Date().toISOString().slice(0,10);
+
+  const intent = (s1.raw||'').trim();
+
+  // 명시적 크기 지정 — 로딩 중 intrinsic size로 인한 레이아웃 오류 방지
+  const imgBlock = (url, cap) => url
+    ? `<div class="pdf-img"><img src="${url}" alt="${cap}" width="280" height="280"><div class="cap">${cap}</div></div>`
+    : `<div class="pdf-img"><div class="cap">(이미지 없음)</div></div>`;
+
+  const chatHtml = s4.dialogue.map(m =>
+    `<div class="pdf-chat-msg ${m.role}"><b>${m.role==='assistant'?'Claude':'나'}:</b><br>${escapeHtml(m.content)}</div>`
+  ).join('');
+
+  return `
+    <div class="pdf-root">
+      <h1>🎨 프롬프트 아틀리에 — 나의 여정</h1>
+      <div class="pdf-sub">${today}</div>
+
+      <h2>1단계. 표현 의도</h2>
+      <div class="pdf-answer">${escapeHtml(intent)}</div>
+      <h3>1차 프롬프트</h3>
+      <div class="pdf-prompt">${escapeHtml(state.prompts.p1)}</div>
+      ${imgBlock(img.img1, '1차 생성 이미지')}
+
+      <h2>2단계. 조형 언어로 번역하기</h2>
+      <h3>조형 언어</h3>
+      <div class="pdf-answer">${escapeHtml(s2.forms||'')}</div>
+      <h3>은유 (나만의 것)</h3>
+      <div class="pdf-answer">${escapeHtml(s2.metaphor||'')}</div>
+      <h3>나만 아는 것</h3>
+      <div class="pdf-answer">${escapeHtml(s2.personal||'')}</div>
+      <h3>2차 프롬프트</h3>
+      <div class="pdf-prompt">${escapeHtml(state.prompts.p2)}</div>
+      ${imgBlock(img.img2, '2차 생성 이미지')}
+
+      <h2>3단계. 성찰</h2>
+      <h3>첫인상</h3>
+      <div class="pdf-answer">${escapeHtml(s3.impression)}</div>
+      <h3>생각보다 잘 표현된 부분</h3>
+      <div class="pdf-answer">${escapeHtml(s3.good)}</div>
+      <h3>내 의도와 다르게 표현된 부분</h3>
+      <div class="pdf-answer">${escapeHtml(s3.gap)}</div>
+      <h3>AI가 내 프롬프트를 이해한 방식</h3>
+      <div class="pdf-answer">${escapeHtml(s3.interpretation)}</div>
+
+      <h2>4단계. 재구체화 — Claude와의 대화</h2>
+      ${chatHtml}
+      <h3>최종 프롬프트</h3>
+      <div class="pdf-prompt">${escapeHtml(state.prompts.p3)}</div>
+      ${imgBlock(img.img3, '3차 생성 이미지 (최종)')}
+
+      <h2>5단계. 여정 성찰</h2>
+      <h3>📝 프롬프트의 변화 — 둘은 어떤 점이 다른가요?</h3>
+      <div class="pdf-answer">${escapeHtml(s5.diff)}</div>
+
+      <h3>🫀 내가 남긴 것 — 프롬프트에 담긴 나의 생각</h3>
+      <div class="pdf-answer">${escapeHtml(s5.ownership||'')}</div>
+      <h3>🫀 작품의 진짜 뿌리</h3>
+      <div class="pdf-answer">${escapeHtml(s5.workRoot||'')}</div>
+
+      <h3>🎨 작품 관점 — 잘 표현된 부분</h3>
+      <div class="pdf-answer">${escapeHtml(s5.good)}</div>
+      <h3>🎨 작품 관점 — 아쉬운 부분</h3>
+      <div class="pdf-answer">${escapeHtml(s5.lacking)}</div>
+      <h3>🎨 작품 관점 — 직접 그린다면</h3>
+      <div class="pdf-answer">${escapeHtml(s5.redraw)}</div>
+
+      <h3>🤝 AI가 잘 해준 것</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiDid||'')}</div>
+      <h3>🤝 AI가 따라오지 못한 것</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiMissed||'')}</div>
+      <h3>🤝 AI의 자리 / 나의 영역</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiLine||'')}</div>
+
+      <h3>🌟 수업 전후 AI에 대한 생각의 변화</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiChange||'')}</div>
+      <h3>🌟 앞으로 가져갈 태도</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiAttitude||'')}</div>
+      <h3>🌟 AI 없이도 표현할 수 있는 사람이 되려면</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiBeyond||'')}</div>
+      <h3>🌟 나에게 AI란</h3>
+      <div class="pdf-answer">${escapeHtml(s5.aiDefinition||'')}</div>
+    </div>
+  `;
+}
+
+async function exportPDF(){
+  const btn = $('btnPdf');
+  btn.disabled = true;
+  btn.textContent = '📄 준비 중...';
+  try{
+    const target = $('pdfTarget');
+    target.innerHTML = buildPDFContent();
+
+    // 이미지 로딩 대기 (인쇄 직전 누락 방지)
+    const imgs = target.querySelectorAll('img');
+    await Promise.all([...imgs].map(img => {
+      if(img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    }));
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    toast('💡 "대상"을 "PDF로 저장"으로 선택해주세요');
+    // 브라우저 내장 인쇄 — 한글·긴 컨텐츠·페이지 나눔을 안정적으로 처리
+    window.print();
+  }catch(e){
+    console.error(e);
+    toast('PDF 생성에 실패했어요');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '📄 PDF로 저장하기';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  Next button gating
+ * ════════════════════════════════════════════════════════════════*/
+function refreshNextBtn(){
+  let ok = false;
+  if(state.current===1) ok = isStage1Valid();
+  else if(state.current===2) ok = isStage2Valid();
+  else if(state.current===3) ok = isStage3Valid();
+  else if(state.current===4) ok = isStage4Valid();
+  else if(state.current===5) ok = isStage5Valid();
+  $('btnNext').disabled = !ok;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  Init
+ * ════════════════════════════════════════════════════════════════*/
+(function init(){
+  load();
+
+  // Stage 1 UI restore
+  $('intentRaw').value = state.stage1.raw || '';
+
+  // Stage 2
+  if(!state.stage2.activeCard) state.stage2.activeCard = 1;
+  while(state.stage2.activeCard > 1 && !canActivateCard(state.stage2.activeCard)){
+    state.stage2.activeCard--;
+  }
+  renderStage2();
+
+  // Stage 3
+  if(!state.stage3.activeCard) state.stage3.activeCard = 1;
+  while(state.stage3.activeCard > 1 && !canActivateS3Card(state.stage3.activeCard)){
+    state.stage3.activeCard--;
+  }
+  // 3단계 textarea에 저장된 값 복원 (렌더에서 active만 채움 → 나머지도 써두기)
+  S3_FIELDS.forEach((f,i)=>{
+    const ta = document.querySelector(`[data-s3="${f}"]`);
+    if(ta) ta.value = state.stage3[f] || '';
+  });
+  renderStage3();
+
+  // Stage 4
+  $('finalPrompt').value = state.stage4.finalPrompt || '';
+  if(state.stage4.started) renderChatFromState();
+  // 저장된 대화 정리가 있으면 복원
+  if(state.stage4.summary){
+    $('dialogueSummary').style.display = 'block';
+    $('dsContent').innerHTML = renderMiniMarkdown(state.stage4.summary);
+  }
+  refreshSummaryBtn();
+
+  // Stage 5
+  document.querySelectorAll('[data-s5]').forEach(ta=>{
+    ta.dataset.s5 && (ta.value = state.stage5[ta.dataset.s5] || '');
+  });
+
+  // 호흡 (숨 고르기) 값 복원
+  document.querySelectorAll('[data-breath]').forEach(ta=>{
+    const k = ta.dataset.breath;
+    ta.value = (state.breath && state.breath[k]) || '';
+  });
+
+  // Images
+  ['1','2','3'].forEach(n=>{
+    renderImagePreview(n);
+  });
+
+  renderPrompts();
+  showStage(state.current || 1);
+
+  // 모든 textarea에 자동 확장 적용 (저장된 값 복원된 이후에 호출)
+  attachAutogrowToAll();
+})();
+</script>
+
+</body>
+</html>
